@@ -83,7 +83,7 @@ unsigned int expresstoi(void);
 unsigned int symtoi1(void);
 unsigned int expresstoi_p2(void);
 void error(char *errstr);
-int chkopc(char opcstring[]);
+int chkopc(const char opcstring[]);
 void toxlbuf(char ch);
 void find_operand(void);
 void operand_to_filename(char filename[]);
@@ -284,26 +284,31 @@ void file_err(char *errstr, char filename[]) {
     exit(1);
 }
 
+static const char opcdat1[] = "BRKPHPASLCLCPLPROLSECRTIPHALSRCLIRTSPLARORSEI"
+        "DEYTXATYATXSTAYTAXCLVTSXINYDEXCLDINXNOPSED";
+static const int dat1[] = { 0, 8, 10, 24, 40, 42, 56, 64, 72, 74, 88, 96, 104, 106,
+    120, 136, 138, 152, 154, 168, 170, 184, 186, 200, 202, 216, 232, 234, 248
+    };
+
+static const char opcds[] = " BIT STY LDY CPY CPX ORA AND EOR ADC STA LDA CMP SBC "
+    "ASL ROL LSR ROR STX LDX DEC INC BRK PHP ASL CLC PLP ROL SEC RTI PHA LSR "
+    "CLI RTS PLA ROR SEI DEY TXA TYA TXS TAY TAX CLV TSX INY DEX CLD INX NOP "
+    "SED BPL BMI BVC BVS BCC BCS BNE BEQ JMP JSR ";     // for checking labels
+
+static const char assdirecs[] =
+        " EQU EPZ ORG ASC DFB DFW DSKIMAGE XFDIMAGE ATRIMAGE RUNEMUL CPFL ORG APPEND RMB INITRMB "
+        "ADDTOIMG SAVEAS BSAVE FILLMEM INCLUDE LINKFILE LINK SMTFILE ";
+static const char assdirecssolo[] = " OUT NOHEADER OBJFILE SMTTOIMG ";
+
+static const char brastrdat[] = "BPLBMIBVCBVSBCCBCSBNEBEQ";
+static const unsigned short bradat[] =
+        { 0x10, 0x30, 0x50, 0x70, 0x90, 0xb0, 0xd0, 0xf0 };
+static const int intab[] = { 0x40, 0, 0x20, 0x60, 0xA0, 0xC0, 0x80, 0xE0 };
+
 
 
 /****************************    main()     ****************/
 int main(int argc, char *argv[]) {
-    char opcdat1[] = "BRKPHPASLCLCPLPROLSECRTIPHALSRCLIRTSPLARORSEI"
-        "DEYTXATYATXSTAYTAXCLVTSXINYDEXCLDINXNOPSED";
-    int dat1[] = { 0, 8, 10, 24, 40, 42, 56, 64, 72, 74, 88, 96, 104, 106, 120,
-        136, 138, 152, 154, 168, 170, 184, 186, 200, 202, 216, 232, 234, 248
-    };
-
-    char opcds[] = " BIT STY LDY CPY CPX ORA AND EOR ADC STA LDA CMP SBC ASL ROL " "LSR ROR STX LDX DEC INC " "BRK PHP ASL CLC PLP ROL SEC RTI PHA LSR CLI RTS PLA ROR SEI " "DEY TXA TYA TXS TAY TAX CLV TSX INY DEX CLD INX NOP SED " "BPL BMI BVC BVS BCC BCS BNE BEQ JMP JSR ";     // for checking labels
-
-    char assdirecs[] =
-        " EQU EPZ ORG ASC DFB DFW DSKIMAGE XFDIMAGE ATRIMAGE RUNEMUL CPFL ORG APPEND RMB INITRMB "
-        "ADDTOIMG SAVEAS BSAVE FILLMEM INCLUDE LINKFILE LINK SMTFILE ";
-    char assdirecssolo[] = " OUT NOHEADER OBJFILE SMTTOIMG ";
-
-    char brastrdat[] = "BPLBMIBVCBVSBCCBCSBNEBEQ";
-    unsigned short bradat[] =
-        { 0x10, 0x30, 0x50, 0x70, 0x90, 0xb0, 0xd0, 0xf0 };
     int braoffset;
 
     char *includebuf;
@@ -323,8 +328,6 @@ int main(int argc, char *argv[]) {
     char opcstr[40];
     char *tpsav;
     int temp;
-    int intab[] = { 0x40, 0, 0x20, 0x60, 0xA0, 0xC0, 0x80, 0xE0 };
-
 
     char *operptr, macdumtab[MAXDUMS][10], dumbuf[80];
     int dumnum, macroflg;
@@ -2224,9 +2227,9 @@ unsigned int symtoi1() {
 /********* chkopc    returns the position (0, 1, 2,.. ) of opc in string
 						returns -1 if not found
 						*/
-int chkopc(char opcstring[]) {
+int chkopc(const char opcstring[]) {
     int cnt = 0;
-    char *ptr;
+    const char *ptr;
 
     if (*(opcode + 3))
         return (-1);
