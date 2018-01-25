@@ -383,22 +383,8 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
 
-/******************** File ******************************/
-    puts("***********************************************************************");
-    puts("*                                                                     *");
-    puts("*                           CODEGEN V.2.6.2                           *");
-    puts("*                                                                     *");
-    puts("* An ATMAS-II compatible 6502-Macro-Cross-Assembler for 8-bit Ataris  *");
-    puts("*                                                                     *");
-    puts("*               Copyright 2004-2011 by Richard Jackman                *");
-    puts("*               http://www.richard-jackman.de/Atari_XL/               *");
-    puts("*                                                                     *");
-    puts("* - assembles a source-file (.SRC)                                    *");
-    puts("* - creates a boot image (temp.atr) containing DOS25 and AUTORUN.SYS  *");
-    puts("*                                                                     *");
-    puts("* See read_me.txt and SGEN32.SRC for further options and instructions.*");
-    puts("*                                                                     *");
-    puts("***********************************************************************\n");
+    puts("xatmas2 - codegen v2.6.2 - by Richard Jackman");
+
     if (argc > 1)
         strcpy(src_filename, argv[1]);
     else {
