@@ -7,11 +7,16 @@
 #include <string.h>
 #include <ctype.h>
 #include <time.h>
-#include <direct.h>
+#include <unistd.h>
+
+//#include <direct.h>
 
 #include "dos25dat.cpp"
 
-int getch(void);
+// int getch(void);
+
+#define getch getchar
+#define fclose(x) if (x) { fclose(x); x=NULL; }
 
 typedef struct {                /* Define the structure ssstype */
     char symbol[9];
@@ -46,7 +51,8 @@ void disassemble(unsigned int symnum);
 
 #define MAX_TXT_SIZ 0xfffffL
 enum { OPC, NN, AA, AAAA, AAX, AAAAX, AAY, AAAAY, BAAXB, BAABY, BRA, BAAAAB,
-        ERROR };
+    ERROR
+};
 enum { UNUSED, SYMBOL, MACRO, MACRO_UNUSED, MACRO_LAB };
 
 /*#define Q OPC*/
@@ -396,7 +402,7 @@ int main(int argc, char *argv[]) {
         strcpy(src_filename, argv[1]);
     else {
         printf("Please enter name of file to be assembled>");
-        gets(src_filename);
+        fgets(src_filename, 128, stdin);
         if (strchr(src_filename, '.') == 0)
             strcat(src_filename, ".src");
     }
@@ -418,7 +424,7 @@ int main(int argc, char *argv[]) {
         ptr = strrchr(pathstr, '\\');
         *++ptr = '\0';
         printf("\nDirectory path: %s\n", pathstr);
-        _chdir(pathstr);
+        chdir(pathstr);
 
         //remove path from src_filename
         ptr = src_filename;
@@ -495,7 +501,6 @@ int main(int argc, char *argv[]) {
 
 
     for (pass = 1; pass <= 2; pass++)
-
     {
 #if ATARI800
         sgndtbptr1 = sgndtbptr2 = sgndtb;
@@ -786,9 +791,8 @@ int main(int argc, char *argv[]) {
                     if ((maclevel == 0) || !(strchr(outflgs, 'M') || strchr(outflgs, 'm')))     //M = macros not expanded
                     {
 
-                        if (!
-                            (strstr("EQU EPZ ORG", opcode)
-                             && (strlen(opcode) == 3))) {
+                        if (!(strstr("EQU EPZ ORG", opcode)
+                              && (strlen(opcode) == 3))) {
                             if (pc != pc_sav)
                                 sprintf(prnlnbufbeg, "%4X: ", pc);      /* PC ADDRESS */
                             else
@@ -838,14 +842,13 @@ int main(int argc, char *argv[]) {
 
 
 
-                /* RMB  LABEL AT LINE BEGIN*///(Init ving memory bytes)
+                /* RMB  LABEL AT LINE BEGIN *///(Init ving memory bytes)
 
                 if (strcmp(opcode, "RMB") == 0) {
                     if (!rmbflg)
                         error("INITRMB value must precede this line");
 
-                    if (pass == 1)
-                    {
+                    if (pass == 1) {
                         strcpy(sss[symnum].symbol, label);
                         sss[symnum++].symadr = rmbadr;
                         sss[symnum - 1].symtyp = '#';
@@ -1770,7 +1773,6 @@ int main(int argc, char *argv[]) {
 
 /******************* Save to image ************************************/
     if (*dsk_filename)
-
     {
         //printf("\nXFDIMAGE: %s\n\n",dsk_filename);
 
@@ -2372,7 +2374,7 @@ void find_operand(void) {
 }
 
 
-                                                                             /*		*************** src_filename Operand *****************     *////////////////
+                                                                                                                                                     /*         *************** src_filename Operand *****************     *////////////////
 void operand_to_filename(char filename[]) {
 
     char cnt = 0;

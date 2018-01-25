@@ -71,7 +71,7 @@ void file_to_image(char file_filename[], char diskimage_name[]) {
         header_len = 16;
     else {
         printf("%s Only ATR and XFD disk images are supported.", ext);
-        _getch();
+        getch();
         exit(1);
     }
     //
@@ -79,8 +79,8 @@ void file_to_image(char file_filename[], char diskimage_name[]) {
 
     if ((filestream = fopen("savexfd.cfg", "wb")) == NULL) {
         puts("Can't open savexfd.cfg");
-        gets(diskimage_name);
-        _getch();
+        fgets(diskimage_name, 128, stdin);
+        getch();
         exit(1);
     } else {
         fputs(diskimage_name, filestream);
@@ -221,7 +221,7 @@ void file_to_image(char file_filename[], char diskimage_name[]) {
         if ((filestream3 = fopen(atr_filename, "wb")) == NULL) {
             printf("Can't open %s\n", atr_filename);
             puts("press any key");
-            _getch();
+            getch();
             exit(1);
         }
         printf("\nDisk image: ");
@@ -275,7 +275,7 @@ void file_to_image(char file_filename[], char diskimage_name[]) {
 
         }
     }
-    _getch();
+    getch();
 
 #endif
 
@@ -310,7 +310,7 @@ void file_to_image(char file_filename[], char diskimage_name[]) {
                             ("\a\nDisk defect: file number mismatch in sector %i: %i<>%i\n",
                              sec, (unsigned char)ds[sec][sectlen - 3] >> 2,
                              filno - 1);
-                        _getch();
+                        getch();
                     }
 #if SHOW_SECS
                     printf("%4i", sec);
@@ -319,7 +319,7 @@ void file_to_image(char file_filename[], char diskimage_name[]) {
                         printf
                             ("\a\nDisk defect: sector %i is already in use by file %i\n",
                              sec, sector_check[sec]);
-                        _getch();
+                        getch();
                     }
 
                     sector_check[sec] = (char)filno;
@@ -355,7 +355,7 @@ void file_to_image(char file_filename[], char diskimage_name[]) {
             }
         }
     }
-    _getch();
+    getch();
 #endif
 
 /*******************************************************/
@@ -444,7 +444,7 @@ void file_to_image(char file_filename[], char diskimage_name[]) {
 
     }
 //      printf ("Directory entry in xfd disk: '%s'\n",as);
-//      _getch();
+//      getch();
 //      exit(1);
 
         /**************** Open file for reading ***************************/
@@ -453,7 +453,7 @@ void file_to_image(char file_filename[], char diskimage_name[]) {
     if ((filestream = fopen(fs, "rb")) == NULL) {
         printf("Can't open %s\n", fs);
         puts("press any key");
-        _getch();
+        getch();
         exit(1);
     }
 
@@ -513,7 +513,7 @@ void file_to_image(char file_filename[], char diskimage_name[]) {
         frsectors += (unsigned char)ds[i][j + 1] + (unsigned char)ds[i][j + 2] * 0xff;  // add size of file already on disk
         //printf ("Entry found in position %i\n",filno);
     }
-    //_getch();
+    //getch();
     frbytes = (sectlen - 3) * frsectors;
 
     printf("%i available for %s\n", frsectors, fs);
@@ -629,7 +629,7 @@ void file_to_image(char file_filename[], char diskimage_name[]) {
     {
         printf("\aRequire %i sectors, but %i were written", needsecs,
                seccount);
-        _getch();
+        getch();
     }
 
 
@@ -658,7 +658,7 @@ void file_to_image(char file_filename[], char diskimage_name[]) {
     if ((filestream = fopen(diskimage_name, "wb")) == NULL) {
         printf("Can't open %s\n", diskimage_name);
         puts("press any key");
-        _getch();
+        getch();
         exit(1);
     }
     printf("Saving %s", diskimage_name);
@@ -757,7 +757,7 @@ void findfree(int sc) {
 void err(char *errstr)
 {
     printf("\n\n\aERROR: %s\n", errstr);
-    _getch();
+    getch();
     exit(1);
 }
 
@@ -766,7 +766,7 @@ void err(char *errstr)
 void file_err(char *errstr, char filename[])
 {
     printf("\n\n\aERROR: %s %s\n", errstr, filename);
-    _getch();
+    getch();
     exit(1);
 }
 
@@ -777,7 +777,7 @@ void check_sector(int sec) {
 /*	if (ds[sec][sectlen-3]>>2 != filno)
 		{
 		printf("\a\nWrite error: file number mismatch in sector %i %i<>%i\n",sec,ds[sec][sectlen-3]>>2, filno);
-		_getch();
+		getch();
 		exit(1);
 		}*/
 
@@ -785,12 +785,12 @@ void check_sector(int sec) {
     if (sector_check[sec]) {
         printf("\a\nCan't write: sector %i is already in use by file %i\n",
                sec, sector_check[sec]);
-        _getch();
+        getch();
         exit(1);
     }
     if ((sec >= 360) && (sec <= 368)) {
         puts("\aTried to write file sector to sectors 360 to 368 (VTOC and directory");
-        _getch();
+        getch();
         exit(1);
     }
 }
