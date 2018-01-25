@@ -1,0 +1,197 @@
+
+
+
+*	XFDIMAGE W1_DD.XFD
+	
+*	CPFL OPCTEST2.LOA
+
+	NOHEADER
+START	EQU $2200
+
+BB	EPZ $80
+LL	EPZ $82
+HHLL 	equ $4466
+
+CC	EQU $60
+
+	OUT LX
+
+	ORG 0
+	
+
+	DFB $ff,$FF
+	DFW START
+	DFW END+2
+
+
+	ORG START
+	
+
+
+L0	BRK 
+	ORA (BB,x)
+	ORA LL	
+	ASL LL		
+	PHP 	
+	ORA #CC	
+	ASL 			
+	ORA HHLL	
+	ASL HHLL	
+*01
+	BPL L0
+	ORA (LL),y
+	ORA LL,x
+	ASL LL,x
+	CLC 
+	ORA HHLL,y
+	ORA HHLL,x
+	ASL HHLL,x	
+*02
+	JSR HHLL
+	AND (BB,x)
+	BIT LL
+	AND LL
+	ROL LL
+	PLP 
+	AND #CC
+	ROL 
+	BIT HHLL
+	AND HHLL
+	ROL HHLL	
+*03
+	BMI L0
+	AND (LL),y
+	AND LL,x
+skip	ROL LL,x
+	SEC 
+	AND HHLL,y
+	AND HHLL,x
+	ROL HHLL,x	
+*04
+	RTI 
+skip	EOR (BB,x)
+	EOR LL
+	LSR LL
+	PHA 
+	EOR #CC
+	LSR 
+	JMP HHLL
+	EOR HHLL
+	LSR HHLL	
+*05
+	BVC L8
+	EOR (LL),y
+	EOR LL,x
+	LSR LL,x
+skip	CLI 
+	EOR HHLL,y
+	EOR HHLL,x
+	LSR HHLL,x	
+*06
+	RTS 
+	ADC (BB,x)
+	ADC LL
+	ROR LL
+	PLA 
+	ADC #CC
+	ROR 
+	JMP (HHLL)
+	ADC HHLL
+	ROR HHLL	
+*07
+	BVS L8
+	ADC (LL),y
+	ADC LL,x
+	ROR LL,x
+	SEI 
+	ADC HHLL,y
+	ADC HHLL,x
+	ROR HHLL,x	
+*08
+L8	STA (BB,x)
+	STY LL
+	STA LL
+	stx LL
+	DEY 
+	TXA 
+	STY HHLL
+	STA HHLL
+	STX HHLL	
+*09
+	BCC L8
+	STA (LL),y
+	STY LL,x
+	STA LL,x
+	STX LL,y
+	TYA 
+	STA HHLL,y
+	TXS 
+	STA HHLL,x		
+*0A
+	LDY #CC
+	LDA (BB,x)
+	LDX #CC
+	LDY LL
+	LDA LL
+	LDX LL
+	TAY 
+	LDA #CC
+	TAX 
+	LDY HHLL
+	LDA HHLL
+	LDX HHLL	
+*0B
+	BCS L8
+	LDA (LL),y
+	LDY LL,x
+	LDA LL,x
+	LDX LL,y
+	CLV 
+	LDA HHLL,y
+	TSX 
+	LDY HHLL,x
+	LDA HHLL,x
+	LDX HHLL,y	
+*0C
+	CPY #CC
+	CMP (BB,x)
+	CPY LL
+	CMP LL
+	DEC LL
+	INY 
+	CMP #CC
+	DEX 
+	CPY HHLL
+	CMP HHLL
+	DEC HHLL	
+*0D
+	BNE LF
+	CMP (LL),y
+	CMP LL,x
+	DEC LL,x
+	CLD 
+	CMP HHLL,y
+	CMP HHLL,x
+	DEC HHLL,x	
+*0E
+	CPX #CC
+	SBC (BB,x)
+	CPX LL
+	SBC LL
+	INC LL
+	INX 
+	SBC #CC
+	NOP 
+	CPX HHLL
+	SBC HHLL
+	INC HHLL	
+*0F
+LF	BEQ LF
+	SBC (LL),y
+	SBC LL,x
+	INC LL,x
+	SED 
+	SBC HHLL,y
+	SBC HHLL,x
+END	INC HHLL,x	
+	
