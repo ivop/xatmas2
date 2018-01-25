@@ -88,7 +88,6 @@ void list_label_f(int i);       //label zu LIS file
 unsigned int symtoi3(char *strbeg);
 void sectyp(char line_type);
 char fptsmb(int i);
-char getkey(void);
 int prec(char symbol);
 
 /*************************  global variables  ************/
@@ -377,8 +376,6 @@ int main(int argc, char *argv[]) {
     txtbuf = (char *)malloc(MAX_TXT_SIZ);       // * sizeof(*txtbuf));     /* malloc   begin of buffer file is loaded into */
     if (txtbuf == NULL) {
         printf("Can't allocate memory for text buffer.\a\n");
-        puts("press any key");
-        getch();
         exit(1);
     }
 
@@ -412,8 +409,6 @@ int main(int argc, char *argv[]) {
         || (toupper(*(ptr + 2)) != 'R')
         || (toupper(*(ptr + 3)) != 'C')) {
         printf("File must end with '.SRC'\n");
-        puts("press any key");
-        getch();
         exit(1);
     }
 
@@ -439,8 +434,6 @@ int main(int argc, char *argv[]) {
 
     if ((stream = fopen(src_filename, "r")) == NULL) {
         printf("Can't open %s\n", src_filename);
-        puts("press any key");
-        getch();
         exit(1);
     }
 
@@ -450,7 +443,6 @@ int main(int argc, char *argv[]) {
 
     if (txtsiz == MAX_TXT_SIZ) {
         puts("File is too long");
-        getch();
         exit(1);
     }
     printf("%li bytes\n", txtsiz);
@@ -587,8 +579,6 @@ int main(int argc, char *argv[]) {
                         linbegptr[linlen] = 0;
                         printf("\a\nIllegal character at line %i:\n", linnum);
                         puts(linbegptr);
-                        printf("Press any key\n");
-                        getch();
                         exit(1);
                     }
                     linptr++;
@@ -1594,7 +1584,6 @@ int main(int argc, char *argv[]) {
         }
 
         if (twiceflg) {
-            getch();
             exit(1);
         }
 #if ATARI800
@@ -1829,8 +1818,6 @@ int main(int argc, char *argv[]) {
     disassemble(0x4C0C);
 #endif
 
-    puts("Press any key to exit");
-    getch();
     return 0;
 }
 
@@ -2281,7 +2268,6 @@ void error(char *errstr) {
     } else {
         printf("Error in macro:\n%s", linbuf[maclevel]);
     }
-    getch();
     exit(linnum);
 }
 
@@ -2536,13 +2522,4 @@ char fptsmb(int i) {
         cnt--;
     }
     return (len);
-}
-
-char getkey(void) {
-    char chr;
-
-    chr = (char)getch();
-    if (chr == toupper('x'))
-        error("ABORT");
-    return (chr);
 }
