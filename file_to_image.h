@@ -70,7 +70,7 @@ void file_to_image(char file_filename[], char diskimage_name[]) {
     else if (strcmp(ext, ".atr") == 0)
         header_len = 16;
     else {
-        printf("%s Only ATR and XFD disk images are supported.", ext);
+        printf("%s Only ATR and XFD disk images are supported.\n", ext);
         exit(1);
     }
     //
