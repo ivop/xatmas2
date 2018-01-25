@@ -71,7 +71,6 @@ void file_to_image(char file_filename[], char diskimage_name[]) {
         header_len = 16;
     else {
         printf("%s Only ATR and XFD disk images are supported.", ext);
-        getch();
         exit(1);
     }
     //
@@ -80,7 +79,6 @@ void file_to_image(char file_filename[], char diskimage_name[]) {
     if ((filestream = fopen("savexfd.cfg", "wb")) == NULL) {
         puts("Can't open savexfd.cfg");
         fgets(diskimage_name, 128, stdin);
-        getch();
         exit(1);
     } else {
         fputs(diskimage_name, filestream);
@@ -220,8 +218,6 @@ void file_to_image(char file_filename[], char diskimage_name[]) {
         strcat(atr_filename, ".ATR");
         if ((filestream3 = fopen(atr_filename, "wb")) == NULL) {
             printf("Can't open %s\n", atr_filename);
-            puts("press any key");
-            getch();
             exit(1);
         }
         printf("\nDisk image: ");
@@ -275,7 +271,6 @@ void file_to_image(char file_filename[], char diskimage_name[]) {
 
         }
     }
-    getch();
 
 #endif
 
@@ -310,7 +305,6 @@ void file_to_image(char file_filename[], char diskimage_name[]) {
                             ("\a\nDisk defect: file number mismatch in sector %i: %i<>%i\n",
                              sec, (unsigned char)ds[sec][sectlen - 3] >> 2,
                              filno - 1);
-                        getch();
                     }
 #if SHOW_SECS
                     printf("%4i", sec);
@@ -319,7 +313,6 @@ void file_to_image(char file_filename[], char diskimage_name[]) {
                         printf
                             ("\a\nDisk defect: sector %i is already in use by file %i\n",
                              sec, sector_check[sec]);
-                        getch();
                     }
 
                     sector_check[sec] = (char)filno;
@@ -355,7 +348,6 @@ void file_to_image(char file_filename[], char diskimage_name[]) {
             }
         }
     }
-    getch();
 #endif
 
 /*******************************************************/
@@ -452,8 +444,6 @@ void file_to_image(char file_filename[], char diskimage_name[]) {
 
     if ((filestream = fopen(fs, "rb")) == NULL) {
         printf("Can't open %s\n", fs);
-        puts("press any key");
-        getch();
         exit(1);
     }
 
@@ -629,7 +619,6 @@ void file_to_image(char file_filename[], char diskimage_name[]) {
     {
         printf("\aRequire %i sectors, but %i were written", needsecs,
                seccount);
-        getch();
     }
 
 
@@ -657,8 +646,6 @@ void file_to_image(char file_filename[], char diskimage_name[]) {
         header_len = 16;
     if ((filestream = fopen(diskimage_name, "wb")) == NULL) {
         printf("Can't open %s\n", diskimage_name);
-        puts("press any key");
-        getch();
         exit(1);
     }
     printf("Saving %s", diskimage_name);
@@ -757,7 +744,6 @@ void findfree(int sc) {
 void err(char *errstr)
 {
     printf("\n\n\aERROR: %s\n", errstr);
-    getch();
     exit(1);
 }
 
@@ -766,7 +752,6 @@ void err(char *errstr)
 void file_err(char *errstr, char filename[])
 {
     printf("\n\n\aERROR: %s %s\n", errstr, filename);
-    getch();
     exit(1);
 }
 
@@ -785,12 +770,10 @@ void check_sector(int sec) {
     if (sector_check[sec]) {
         printf("\a\nCan't write: sector %i is already in use by file %i\n",
                sec, sector_check[sec]);
-        getch();
         exit(1);
     }
     if ((sec >= 360) && (sec <= 368)) {
         puts("\aTried to write file sector to sectors 360 to 368 (VTOC and directory");
-        getch();
         exit(1);
     }
 }
