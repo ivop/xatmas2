@@ -1,7 +1,11 @@
+/*
+ * xatmas2 - Atmas 2 compatible Cross-Assembler
+ *
+ * Copyright (C) 2004-2011 by Richard Jackman <richard.miles.jackman@gmail.com>
+ * See LICENSE for details
+ *
+ */
 
-
-
-/************************** include *****************/
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
