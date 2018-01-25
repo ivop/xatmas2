@@ -277,8 +277,12 @@ FILE *stream2;
 FILE *stream3;
 fpos_t pos2;
 
-
-#include "file_to_image.h"
+// to be removed:
+void file_to_image(char file_filename[], char diskimage_name[]) { }
+void file_err(char *errstr, char filename[]) {
+    printf("\n\n\aERROR: %s %s\n", errstr, filename);
+    exit(1);
+}
 
 
 
