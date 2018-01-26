@@ -185,7 +185,7 @@ static const char opcds[] = " BIT STY LDY CPY CPX ORA AND EOR ADC STA LDA CMP SB
 
 static const char assdirecs[] =
         " EQU EPZ ORG ASC DFB DFW ORG RMB INITRMB "
-        " FILLMEM INCLUDE LINKFILE LINK ";
+        " FILLMEM INCLUDE ";
 static const char assdirecssolo[] = " OUT NOHEADER OBJFILE ";
 
 static const char brastrdat[] = "BPLBMIBVCBVSBCCBCSBNEBEQ";
@@ -193,9 +193,8 @@ static const unsigned short bradat[] =
         { 0x10, 0x30, 0x50, 0x70, 0x90, 0xb0, 0xd0, 0xf0 };
 static const int intab[] = { 0x40, 0, 0x20, 0x60, 0xA0, 0xC0, 0x80, 0xE0 };
 
+// ----------------------------------------------------------------------------
 
-
-/****************************    main()     ****************/
 int main(int argc, char *argv[]) {
     int braoffset;
 
@@ -312,8 +311,6 @@ int main(int argc, char *argv[]) {
     *txtendptr++ = '\0';
 
 /********************** Main loop *******************/
-
-
 
     for (pass = 1; pass <= 2; pass++)
     {
@@ -1586,11 +1583,11 @@ unsigned int expresstoi_p2() {
     return (val);
 }
 
-
-/*********** symtoi1   converts symbol or number to integer (return value begins at txtptr.
-					  When done txtptr is the address directly after the location of symbol.
-					  If evaluation is not possible,the value returned is NOTFOUND
-					  */
+/*********** symtoi1()
+ * converts symbol or number to integer (return value begins at txtptr.
+ * When done txtptr is the address directly after the location of symbol.
+ * If evaluation is not possible,the value returned is NOTFOUND
+ */
 unsigned int symtoi1() {
     char strbeg[40];
     char *ptr;
@@ -1718,8 +1715,6 @@ unsigned int symtoi1() {
     return (NOTFOUND);
 }
 
-/********************************************/
-
 /********* chkopc    returns the position (0, 1, 2,.. ) of opc in string
 						returns -1 if not found
 						*/
@@ -1756,8 +1751,6 @@ void error(char *errstr) {
         strcpy(partstr, linbuf[0]);
         partstr[len] = '\0';
         printf("%s", partstr);
-        //printf(" txtptr = %x linbegptr = %x len = %i",txtptr,linbegptr,len);
-        //printf("\n%s",linbegptr);
     } else {
         printf("Error in macro:\n%s", linbuf[maclevel]);
     }
@@ -1852,8 +1845,7 @@ void find_operand(void) {
     operand[cnt] = 0;
 }
 
-
-                                                                                                                                                     /*         *************** src_filename Operand *****************     *////////////////
+/* *************** src_filename Operand *****************     */
 void operand_to_filename(char filename[]) {
 
     int cnt = 0;
@@ -1901,7 +1893,6 @@ void list_label(int i) {
         printf(" = %X\n", sss[i].symadr);
 }
 
-
 void list_label_f(int i) {
     fprintf(stream2, "%s\t", sss[i].symbol);
     if (sss[i].macf == MACRO)
@@ -1909,9 +1900,6 @@ void list_label_f(int i) {
     else
         fprintf(stream2, " = %X\n", sss[i].symadr);
 }
-
-
-
 
 unsigned int symtoi3(char *strbeg) {
     int i, j;

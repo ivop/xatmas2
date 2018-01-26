@@ -14,7 +14,7 @@ HHLL 	equ $4466
 
 CC	EQU $60
 
-	OUT LX
+	OUT LN
 
 	ORG 0
 	
