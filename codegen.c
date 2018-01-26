@@ -12,6 +12,7 @@
 #include <ctype.h>
 #include <time.h>
 #include <unistd.h>
+#include <err.h>
 
 #define getch getchar
 #define fclose(x) if (x) { fclose(x); x=NULL; }
@@ -192,7 +193,7 @@ char outflgs[40];
 char linbuf[MAXMACLEV][80];
 
 
-long txtsiz, include_txtsiz;
+int txtsiz, include_txtsiz;
 
 int symnum, symval, linnum, linnum_sav, mismatch_linnum, symnumext;
 unsigned int pc, pc_sav, mismatch_pc;
@@ -343,12 +344,9 @@ int main(int argc, char *argv[]) {
     short rmbflg = 0;
     int rmbadr;
     short smttoimg_flg = 0;
-
-/*xlram_codetpy = malloc (0xffff); /* each address is assigned a flag used in symtyp
-				Addresses in normal code which do not coincide with an opcode are assigned zero */
     char *txtbuf;
 
-    txtbuf = (char *)malloc(MAX_TXT_SIZ);       // * sizeof(*txtbuf));     /* malloc   begin of buffer file is loaded into */
+    txtbuf = (char *)malloc(MAX_TXT_SIZ); /* malloc   begin of buffer file is loaded into */
     if (txtbuf == NULL) {
         printf("Can't allocate memory for text buffer.\a\n");
         exit(1);
@@ -406,7 +404,7 @@ int main(int argc, char *argv[]) {
         puts("File is too long");
         exit(1);
     }
-    printf("%li bytes\n", txtsiz);
+    printf("%i bytes\n", txtsiz);
 
 
     strcpy(lstfilename, src_filename);
@@ -745,7 +743,7 @@ int main(int argc, char *argv[]) {
                             if (pc != pc_sav)
                                 sprintf(prnlnbufbeg, "%4X: ", pc);      /* PC ADDRESS */
                             else
-                                sprintf(prnlnbufbeg, "    : ", pc);
+                                sprintf(prnlnbufbeg, "    : ");
                             pc_sav = pc;
                         } else
                             sprintf(prnlnbufbeg, "      ");
@@ -922,7 +920,7 @@ int main(int argc, char *argv[]) {
 
             if (strcmp(opcode, "LINK") == 0) {
                 if (pass == 2) {
-                    if (!linkfile_filename)
+                    if (!linkfile_filename[0])
                         error("LINKFILE must be designated before this line");
                     operand_to_filename(link_filename[link_cnt++]);
                 }
@@ -958,7 +956,7 @@ int main(int argc, char *argv[]) {
                 if (txtsiz > MAX_TXT_SIZ - txtsiz)
                     error("INCLUDE File is too long");
 
-                printf(": %li bytes\n", include_txtsiz);
+                printf(": %i bytes\n", include_txtsiz);
 
                 txtendptr = includebuf + include_txtsiz;
 
@@ -1517,7 +1515,7 @@ int main(int argc, char *argv[]) {
 
             for (i = 0; i < macnum; i++) {
                 if (symnum >= MAXSYMS - 1)
-                    err("Too many labels");
+                    err(1, "Too many labels");
                 if (macptrtab[i])
                     sss[symnum].macf = MACRO;
                 else
@@ -1525,7 +1523,7 @@ int main(int argc, char *argv[]) {
                 strcpy(sss[symnum++].symbol, macsymbol[i]);
 
             }
-            qsort(sss, symnum, sizeof(ssstype), strcmp);
+            qsort(sss, symnum, sizeof(ssstype), (int (*)(const void *, const void *)) strcmp);
 
 
             for (i = symnum - 1; i > 1; i--) {
@@ -1557,7 +1555,7 @@ int main(int argc, char *argv[]) {
 
 
 
-    qsort(sss, symnumext, sizeof(ssstype), ssscmpadr);
+    qsort(sss, symnumext, sizeof(ssstype), (int (*)(const void *, const void *)) ssscmpadr);
 
 /* Symbol table */
     if (strchr(outflgs, 'N') || strchr(outflgs, 'n')) {
@@ -1642,7 +1640,7 @@ int main(int argc, char *argv[]) {
     txtsiz = fwrite(xlbuf, 1, xlbfptr - xlbuf, stream);
     if (txtsiz != xlbfptr - xlbuf)
         file_err("Can't save", loafilename);
-    printf("%ld bytes\n", txtsiz);
+    printf("%d bytes\n", txtsiz);
     fclose(stream);
 
 /* Link Link Link Link Link Link Link Link Link Link Link Link Link Link Link Link */
@@ -1669,7 +1667,7 @@ int main(int argc, char *argv[]) {
         txtsiz = fwrite(xlbuf, 1, xlbfptr - xlbuf, stream);
         if (txtsiz != xlbfptr - xlbuf)
             puts("Write error");
-        printf("%ld bytes\n", txtsiz);
+        printf("%i bytes\n", txtsiz);
         fclose(stream);
     }
 
@@ -1802,7 +1800,7 @@ unsigned int expresstoi() {
     char *tptrsv, *ptr;
     char infix[50], postfix[50];
     int symval_list[30];
-    char symval_cnt = '\0';
+    int symval_cnt = 0;
 
     int j = 0, k = 0, length;
     char temp;
@@ -2093,22 +2091,22 @@ unsigned int symtoi1() {
     } else {                    /* pass == 2 */
 
         if ((strcmp(strbeg, "DO") == 0))
-            sprintf(strbeg, "DO%4.4i\0", donum);
+            sprintf(strbeg, "DO%4.4i", donum);
         if ((strcmp(strbeg, "LOOP") == 0))
-            sprintf(strbeg, "LOOP%4.4i\0", loopnum);
+            sprintf(strbeg, "LOOP%4.4i", loopnum);
         if ((strcmp(strbeg, "MINUS") == 0))
-            sprintf(strbeg, "MINU%4.4i\0", minusnum);
+            sprintf(strbeg, "MINU%4.4i", minusnum);
         if ((strcmp(strbeg, "PLUS") == 0))
-            sprintf(strbeg, "PLUS%4.4i\0", plusnum);
+            sprintf(strbeg, "PLUS%4.4i", plusnum);
         if ((strcmp(strbeg, "SKIP") == 0))
-            sprintf(strbeg, "SKIP%4.4i\0", skipnum);
+            sprintf(strbeg, "SKIP%4.4i", skipnum);
         if ((strcmp(strbeg, "CONT") == 0))
-            sprintf(strbeg, "CONT%4.4i\0", contnum);
+            sprintf(strbeg, "CONT%4.4i", contnum);
         if ((strcmp(strbeg, "ENDIF") == 0))
-            sprintf(strbeg, "ENDI%4.4i\0", endifnum);
+            sprintf(strbeg, "ENDI%4.4i", endifnum);
 
         if ((sssptr =
-             bsearch(strbeg, sss, symnum, sizeof(ssstype), strcmp)) != 0) {
+             bsearch(strbeg, sss, symnum, sizeof(ssstype), (int (*)(const void *, const void *)) strcmp)) != 0) {
             if (maclevel)
                 sssptr->macf = MACRO_LAB;
             else
@@ -2246,7 +2244,7 @@ void toxlbuf(char ch) {
 /*		*************** Operand *****************     */
 void find_operand(void) {
 
-    char cnt = 0;
+    int cnt = 0;
     char *linptr;
 
     switch (*txtptr++) {
@@ -2271,7 +2269,7 @@ void find_operand(void) {
                                                                                                                                                      /*         *************** src_filename Operand *****************     *////////////////
 void operand_to_filename(char filename[]) {
 
-    char cnt = 0;
+    int cnt = 0;
     char *linptr;
 
     switch (*txtptr++) {
@@ -2397,7 +2395,7 @@ void sectyp(char line_type) {
 
 char fptsmb(int i) {
     char *lnbfptr;
-    char cnt;
+    int cnt;
     char len;
 
     if ((sss[i].symadr == sss[i - 1].symadr) && (i > 0)) {      /* double entry */
