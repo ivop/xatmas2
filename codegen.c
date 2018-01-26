@@ -25,11 +25,6 @@ typedef struct {                /* Define the structure ssstype */
     char symtyp;
 } ssstype;
 
-#define PRINT_HEX_CODES 0
-#define SAVE_TESTXL 1
-#define EXPRESSTOI_OLD 0
-#define LSTOLD 1
-
 #define MAX_BIN_SIZ 0x1ffffL
 #define MAXSYMS 2000
 #define MAXMACSYMS 200
@@ -1386,67 +1381,6 @@ int main(int argc, char *argv[]) {
     fclose(stream);
 }
 
-/****************************************+*********************/
-/******************* F U N C T I O N S ***********************/
-/*************************************************************/
-
-/********************* expresstoi old ****************************/
-
-#if EXPRESSTOI_OLD
-
-unsigned int expresstoi() {
-    unsigned int i;
-    unsigned int result = 0;
-    char ch = '+';
-    char notfound = 0;
-    char *tptrsv, *ptr;
-
-    tptrsv = ptr = txtptr;
-
-    if (*txtptr == '+')
-        ch = *txtptr++;
-    if (*txtptr == '-')
-        ch = *txtptr++;
-
-    do {
-        i = symtoi1();
-        if (i == NOTFOUND)
-            notfound = 1;
-
-        /*if (pass == 2)
-           {
-           if (i == NOTFOUND)
-           {
-           while (isalnum(*ptr))                        // Label
-           ptr++;
-           *ptr = '\0';
-           printf ("\nThe label %s is unknown",tptrsv);
-           error("");
-           }
-           } */
-        if (ch == '+')
-            result += i;
-        if (ch == '-')
-            result -= i;
-        if (ch == '*')
-            result *= i;
-        if (ch == '/')
-            result /= i;
-        ch = *txtptr++;
-    } while (strchr("+-*/", ch));
-    txtptr--;
-    if (notfound)
-        result = NOTFOUND;
-    return (result);
-}
-
-
-
-
-#else
-
-/********************* expresstoi new ****************************/
-
 unsigned int expresstoi() {
     int i;
     int result = 0;
@@ -1639,8 +1573,6 @@ int prec(char symbol) {
         return 2;
     return 0;
 }
-
-#endif
 
 /********************* expresstoi_p2 ****************************/
 
