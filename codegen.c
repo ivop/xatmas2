@@ -30,15 +30,9 @@ typedef struct {                /* Define the structure ssstype */
     char symtyp;
 } ssstype;
 
-void disassemble(unsigned int symnum);
-
-/***************  Preprocessor   **************/
-#define _CRT_SECURE_NO_WARNINGS 1       //_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES 1
 #define ATARI800 1
 #define PRINT_HEX_CODES 0
 #define SAVE_TESTXL 1
-#define DISASSEMBLE 0
-#define SAVE_TESTXLSMB 1
 #define VISUEL_C 1              /* Error under Borland Builder. Works, however, under Turbo C (DOS and TOS) */
 #define BORLAND 0               /* 2 Warnings under Visuel C */
 #define EXPRESSTOI_OLD 0
@@ -374,11 +368,6 @@ int main(int argc, char *argv[]) {
     short rmbflg = 0;
     int rmbadr;
     short smttoimg_flg = 0;
-
-#if SAVE_TESTXLSMB
-    fpos_t pos1;
-#endif
-
 
 /*xlram_codetpy = malloc (0xffff); /* each address is assigned a flag used in symtyp
 				Addresses in normal code which do not coincide with an opcode are assigned zero */
@@ -1719,44 +1708,6 @@ int main(int argc, char *argv[]) {
     }
 
 
-/* SMT SMT SMT SMT SMT SMT SMT SMT SMT SMT SMT SMT SMT SMT SMT SMT SMT SMT SMT SMT */
-#if SAVE_TESTXLSMB
-
-    if (*smbfilename == 0) {
-        strcpy(smbfilename, loafilename);
-        if (strchr(smbfilename, '.'))
-            strcpy(strchr(smbfilename, '.'), ".SMT");
-        else
-            strcat(smbfilename, ".SMT");
-    }
-
-
-    if ((stream = fopen(smbfilename, "wb")) == NULL)
-        file_err("Can't open", smbfilename);
-
-    printf("Saving symbol-file %s\n", smbfilename);
-
-    fputc(0xfb, stream);
-    fputc(0x00, stream);
-    fputc(0x00, stream);
-    fputc(0xff, stream);
-    fputc(0xff, stream);
-    fgetpos(stream, &pos1);
-    fputc(0, stream);
-    fputc(0, stream);
-    secsiz = 0;
-    fgetpos(stream, &pos2);
-    for (i = 0; i < symnumext; i++) {
-        lensv = fptsmb(i);
-        secsiz += lensv;
-    }
-    fsetpos(stream, &pos1);
-    fputc((char)secsiz, stream);
-    fputc((char)(secsiz >> 8), stream);
-
-    fclose(stream);
-#endif
-
 /******************* Save to image ************************************/
     if (*dsk_filename)
     {
@@ -1809,12 +1760,6 @@ int main(int argc, char *argv[]) {
         printf("\nStarting emulator %s\n\n", emul_filename);
         system(emul_filename);
     }
-
-/***************************************************************/
-#if DISASSEMBLE
-    disassemble(0x4C0C);
-#endif
-
     return 0;
 }
 
