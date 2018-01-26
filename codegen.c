@@ -30,7 +30,6 @@ typedef struct {                /* Define the structure ssstype */
 #define EXPRESSTOI_OLD 0
 #define LSTOLD 1
 
-/**************************  define  *****************/
 #define MAX_BIN_SIZ 0x1ffffL
 #define MAXSYMS 2000
 #define MAXMACSYMS 200
@@ -45,7 +44,6 @@ enum { OPC, NN, AA, AAAA, AAX, AAAAX, AAY, AAAAY, BAAXB, BAABY, BRA, BAAAAB,
 };
 enum { UNUSED, SYMBOL, MACRO, MACRO_UNUSED, MACRO_LAB };
 
-/*#define Q OPC*/
 #define MAXDUMS 20
 #define LSTBYTES 10
 
@@ -64,7 +62,6 @@ void sectyp(char line_type);
 char fptsmb(int i);
 int prec(char symbol);
 
-/*************************  global variables  ************/
 char opcdat[] =
     "BITSTYLDYCPYCPXORAANDEORADCSTALDACMPSBCASLROLLSRRORSTXLDXDECINC";
 
@@ -251,9 +248,7 @@ int main(int argc, char *argv[]) {
     char include_filename[300];
 
     char loafilename[300];
-    char smbfilename[300];
     char lstfilename[300];
-    char addtoimg_filename[64][20];
     char append_filename[36][20];
     char link_filename[36][20];
     char linkfile_filename[300];
@@ -262,14 +257,11 @@ int main(int argc, char *argv[]) {
     char filnmtmp[300];
     char pathstr[300];
     char dsk_filename[300];
-    char cmp_file[300];
     short lo_fg;
     short objfile_flag = 0;
-    short addtoimg_cnt = 0;
     short append_cnt = 0;
     short rmbflg = 0;
     int rmbadr;
-    short smttoimg_flg = 0;
     char *txtbuf;
 
     txtbuf = (char *)malloc(MAX_TXT_SIZ); /* malloc   begin of buffer file is loaded into */
@@ -352,11 +344,8 @@ int main(int argc, char *argv[]) {
     find_symad_flg = 1;
     maclevel = 0;
     *emul_filename = 0;
-//*dsk_filename = 0;
-    addtoimg_filename[0][0] = 0;
     append_filename[0][0] = 0;
     linkfile_filename[0] = 0;
-    smbfilename[0] = 0;
 
     for (i = 0; i < MAXMACLEV; i++)
         lclbnum[i] = 0;
@@ -898,29 +887,6 @@ int main(int argc, char *argv[]) {
                 continue;
             }
 
-/* ADDTOIMG  SMTFILE  RUN_EMUL  DSKIMAGE */
-
-            if (pass == 2) {
-                if (strcmp(opcode, "ADDTOIMG") == 0) {
-                    operand_to_filename(addtoimg_filename[addtoimg_cnt++]);
-                    continue;
-                }
-                if (strcmp(opcode, "SMTFILE") == 0) {
-                    operand_to_filename(smbfilename);
-                    continue;
-                }
-                if (strcmp(opcode, "RUNEMUL") == 0) {
-                    operand_to_filename(emul_filename);
-                    continue;
-                }
-                if ((strcmp(opcode, "DSKIMAGE") == 0)
-                    || (strcmp(opcode, "XFDIMAGE") == 0)
-                    || (strcmp(opcode, "ATRIMAGE") == 0)) {
-                    operand_to_filename(dsk_filename);
-                    continue;
-                }
-            }
-
 /* SAVEAS */
 
             if ((strcmp(opcode, "SAVEAS") == 0)
@@ -938,29 +904,6 @@ int main(int argc, char *argv[]) {
                 objfile_flag = 1;
                 continue;
             }
-
-/* SMTTOIMG */
-
-            if (strcmp(opcode, "SMTTOIMG") == 0) {
-                smttoimg_flg = 1;
-                continue;
-            }
-
-/* CPFL */
-
-            if (strcmp(opcode, "CPFL") == 0) {
-                if (pass == 2) {
-                    operand_to_filename(cmp_file);
-                    if ((stream = fopen(cmp_file, "rb")) == 0) {
-                        printf("Can't open %s\n", cmp_file);
-                        error("Can't open CPFL file");
-                    }
-                    cpfflg = 1;
-                }
-                continue;
-            }
-
-
 
 /* OUT */
             if ((strcmp(opcode, "OUT") == 0)) {
@@ -1596,61 +1539,6 @@ int main(int argc, char *argv[]) {
         printf("%i bytes\n", txtsiz);
         fclose(stream);
     }
-
-
-/******************* Save to image ************************************/
-    if (*dsk_filename)
-    {
-        //printf("\nXFDIMAGE: %s\n\n",dsk_filename);
-
-        if (!linkfile_filename[0])
-            file_to_image(loafilename, dsk_filename);
-        else
-            file_to_image(linkfile_filename, dsk_filename);
-
-        if (smttoimg_flg)
-            file_to_image(smbfilename, dsk_filename);
-
-        if (*addtoimg_filename) {       /* ADDTOIMG */
-            for (i = 0; i < addtoimg_cnt; i++) {
-                file_to_image(addtoimg_filename[i], dsk_filename);
-            }
-        }
-    }
-
-
-    if (cpfflg) {
-        printf("The generated LOA file was compared with the file %s\n",
-               cmp_file);
-        if (mismatch_flg) {
-            printf
-                ("\a******* CPFL - MISMATCH at address $%X, line %i *******\n",
-                 mismatch_pc - 1, mismatch_linnum);
-        } else {
-            puts("");
-
-            puts("      o          k       k   ");
-            puts("    o   o        k     k     ");
-            puts("  o       o      k   k       ");
-            puts(" o         o     k k         The two files are identical");
-            puts("  o       o      k   k       ");
-            puts("    o   o        k     k    ");
-            puts("      o          k       k  ");
-
-        }
-
-    }
-
-
-/*************Run Atari800 Emulator **************************************************/
-
-    if (*emul_filename) {
-        strcat(emul_filename, " ");
-        strcat(emul_filename, dsk_filename);
-        printf("\nStarting emulator %s\n\n", emul_filename);
-        system(emul_filename);
-    }
-    return 0;
 }
 
 /****************************************+*********************/
