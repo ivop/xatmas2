@@ -1,3 +1,3 @@
 #! /bin/sh
 
-rm -f xatmas2 AUTORUN.SYS *~
+rm -f xatmas2 AUTORUN.SYS *~ */*~
