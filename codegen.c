@@ -189,9 +189,9 @@ static const char opcds[] = " BIT STY LDY CPY CPX ORA AND EOR ADC STA LDA CMP SB
     "SED BPL BMI BVC BVS BCC BCS BNE BEQ JMP JSR ";     // for checking labels
 
 static const char assdirecs[] =
-        " EQU EPZ ORG ASC DFB DFW DSKIMAGE XFDIMAGE ATRIMAGE RUNEMUL CPFL ORG APPEND RMB INITRMB "
-        "ADDTOIMG SAVEAS BSAVE FILLMEM INCLUDE LINKFILE LINK SMTFILE ";
-static const char assdirecssolo[] = " OUT NOHEADER OBJFILE SMTTOIMG ";
+        " EQU EPZ ORG ASC DFB DFW ORG RMB INITRMB "
+        " FILLMEM INCLUDE LINKFILE LINK ";
+static const char assdirecssolo[] = " OUT NOHEADER OBJFILE ";
 
 static const char brastrdat[] = "BPLBMIBVCBVSBCCBCSBNEBEQ";
 static const unsigned short bradat[] =
@@ -209,7 +209,6 @@ int main(int argc, char *argv[]) {
     char xlbuf[MAX_BIN_SIZ];
     char *linptr;
     char *ptr;                  /* temporary pointer */
-    char *ptr2;                 /* temporary pointer */
     int pos;
     char ch;
     int offset;
@@ -249,17 +248,9 @@ int main(int argc, char *argv[]) {
 
     char loafilename[300];
     char lstfilename[300];
-    char append_filename[36][20];
-    char link_filename[36][20];
-    char linkfile_filename[300];
-    short link_cnt = 0;
-    char emul_filename[300];
     char filnmtmp[300];
-    char pathstr[300];
-    char dsk_filename[300];
     short lo_fg;
     short objfile_flag = 0;
-    short append_cnt = 0;
     short rmbflg = 0;
     int rmbadr;
     char *txtbuf;
@@ -275,45 +266,14 @@ int main(int argc, char *argv[]) {
     if (argc > 1)
         strcpy(src_filename, argv[1]);
     else {
-        printf("Please enter name of file to be assembled>");
-        fgets(src_filename, 128, stdin);
-        if (strchr(src_filename, '.') == 0)
-            strcat(src_filename, ".src");
-    }
-//printf ("\n%s\n",src_filename);
-    ptr = src_filename + strlen(src_filename) - 4;
-    if ((*ptr != '.') || (toupper(*(ptr + 1)) != 'S')
-        || (toupper(*(ptr + 2)) != 'R')
-        || (toupper(*(ptr + 3)) != 'C')) {
-        printf("File must end with '.SRC'\n");
+        fprintf(stderr, "%s: usage: codegen <file.src>\n", argv[0]);
         exit(1);
-    }
-
-    if (strchr(src_filename, '\\'))     //If dir path designated
-    {
-        //Change directory path to SG dir
-        strcpy(pathstr, src_filename);
-        ptr = strrchr(pathstr, '\\');
-        *++ptr = '\0';
-        printf("\nDirectory path: %s\n", pathstr);
-        chdir(pathstr);
-
-        //remove path from src_filename
-        ptr = src_filename;
-        ptr2 = strrchr(src_filename, '\\');
-        ptr2++;
-        do
-            *ptr++ = *ptr2++;
-        while (*ptr2);
-        *ptr = '\0';
-        printf("Source file: %s -- ", src_filename);
     }
 
     if ((stream = fopen(src_filename, "r")) == NULL) {
-        printf("Can't open %s\n", src_filename);
+        fprintf(stderr, "%s: Can't open %s\n", argv[0], src_filename);
         exit(1);
     }
-
 
     txtsiz = fread(txtbuf, 1, MAX_TXT_SIZ, stream);     // read SRC file into buffer
     fclose(stream);
@@ -328,10 +288,7 @@ int main(int argc, char *argv[]) {
     strcpy(lstfilename, src_filename);
     strcpy(strchr(lstfilename, '.'), ".LIS");
 
-//strcpy(loafilename,src_filename);
-//strcpy(strchr(loafilename,'.'),".LOA");
     strcpy(loafilename, "AUTORUN.SYS");
-    strcpy(dsk_filename, "temp.atr");
 
 /********************** Now work on buffer *********************/
 
@@ -343,9 +300,6 @@ int main(int argc, char *argv[]) {
     mismatch_flg = 0;
     find_symad_flg = 1;
     maclevel = 0;
-    *emul_filename = 0;
-    append_filename[0][0] = 0;
-    linkfile_filename[0] = 0;
 
     for (i = 0; i < MAXMACLEV; i++)
         lclbnum[i] = 0;
@@ -823,33 +777,6 @@ int main(int argc, char *argv[]) {
                 continue;
             }
 
-/* LINKFILE */
-
-            if (strcmp(opcode, "LINKFILE") == 0) {
-                if (pass == 2)
-                    operand_to_filename(linkfile_filename);
-                continue;
-            }
-
-/* LINK */
-
-            if (strcmp(opcode, "LINK") == 0) {
-                if (pass == 2) {
-                    if (!linkfile_filename[0])
-                        error("LINKFILE must be designated before this line");
-                    operand_to_filename(link_filename[link_cnt++]);
-                }
-                continue;
-            }
-
-/* APPEND */
-
-            if (strcmp(opcode, "APPEND") == 0) {
-                if (pass == 2)
-                    operand_to_filename(append_filename[append_cnt++]);
-                continue;
-            }
-
 /* INCLUDE */
 
             if (strcmp(opcode, "INCLUDE") == 0) {
@@ -886,16 +813,6 @@ int main(int argc, char *argv[]) {
 
                 continue;
             }
-
-/* SAVEAS */
-
-            if ((strcmp(opcode, "SAVEAS") == 0)
-                || (strcmp(opcode, "BSAVE") == 0)) {
-                if (pass == 1)
-                    operand_to_filename(loafilename);
-                continue;
-            }
-
 
 /* NOHEADER */
 
@@ -1410,19 +1327,7 @@ int main(int argc, char *argv[]) {
         }
         *sgndtbptr1 = pc - 1;
 
-        /* for (i=0; i<symnum; i++)
-           {
-           list_label(i);
-           getch();
-           } */
-
-
-
-
-    }                           // END PASSES END PASSES END PASSES END PASSES END PASSES END PASSES END PASSES END PASSES
-
-
-
+    } // END PASSES END PASSES END PASSES
 
     qsort(sss, symnumext, sizeof(ssstype), (int (*)(const void *, const void *)) ssscmpadr);
 
@@ -1435,15 +1340,6 @@ int main(int argc, char *argv[]) {
         }
     }
 
-/* SOURCGEN symbol table */
-    if (strchr(outflgs, 'T') || strchr(outflgs, 't')) {
-        fprintf(stream2, "\n\n**** SOURCGEN symbol table *****\n\n");
-        for (i = 0; i < symnumext; i++) {
-            if (sss[i].symtyp)
-                fprintf(stream2, "%c ", sss[i].symtyp);
-            list_label_f(i);
-        }
-    }
     if (lstflg)
         fclose(stream2);
 
@@ -1478,29 +1374,6 @@ int main(int argc, char *argv[]) {
 
     fclose(stream);
 
-
-
-/* APPEND  APPEND APPEND APPEND APPEND APPEND APPEND APPEND APPEND APPEND APPEND APPEND*/
-    if (*append_filename) {
-        txtsiz = xlbfptr - xlbuf;
-
-        for (i = 0; i < append_cnt; i++) {
-            printf("Appending %s -- ", append_filename[i]);
-            if ((stream = fopen(append_filename[i], "rb")) == NULL)
-                file_err("Can't find", append_filename[i]);
-            if ((txtsiz =
-                 fread(xlbfptr, 1, MAX_BIN_SIZ - (xlbfptr - xlbuf),
-                       stream)) == 0) {
-                printf("file size: %i\n", txtsiz);
-                file_err("Can't read", append_filename[i]);
-            }
-            printf("file size: %i\n", txtsiz);
-            xlbfptr += txtsiz;
-            fclose(stream);
-        }
-    }
-
-
 /* LOA LOA LOA LOA LOA LOA LOA LOA LOA LOA LOA LOA LOA LOA LOA LOA LOA LOA LOA LOA LOA */
     if ((stream = fopen(loafilename, "wb")) == NULL)
         file_err("Can't open", loafilename);
@@ -1511,43 +1384,11 @@ int main(int argc, char *argv[]) {
         file_err("Can't save", loafilename);
     printf("%d bytes\n", txtsiz);
     fclose(stream);
-
-/* Link Link Link Link Link Link Link Link Link Link Link Link Link Link Link Link */
-    if (*linkfile_filename) {
-        xlbfptr = xlbuf;
-
-        for (i = 0; i < link_cnt; i++) {
-            printf("Linking %s -- ", link_filename[i]);
-            if ((stream = fopen(link_filename[i], "rb")) == NULL)
-                file_err("Can't find", link_filename[i]);
-            txtsiz =
-                fread(xlbfptr, 1, MAX_BIN_SIZ - (xlbfptr - xlbuf), stream);
-            if (txtsiz == 0)
-                file_err("Can't read", link_filename[i]);
-
-            printf("file size: %i\n", txtsiz);
-            xlbfptr += txtsiz;
-            fclose(stream);
-        }
-        if ((stream = fopen(linkfile_filename, "wb")) == NULL)  /* write to LINKFILE */
-            file_err("Can't open", linkfile_filename);
-
-        printf("\nSaving binary file %s\n", linkfile_filename);
-        txtsiz = fwrite(xlbuf, 1, xlbfptr - xlbuf, stream);
-        if (txtsiz != xlbfptr - xlbuf)
-            puts("Write error");
-        printf("%i bytes\n", txtsiz);
-        fclose(stream);
-    }
 }
 
 /****************************************+*********************/
-
 /******************* F U N C T I O N S ***********************/
-
 /*************************************************************/
-
-
 
 /********************* expresstoi old ****************************/
 
