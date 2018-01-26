@@ -57,22 +57,6 @@ enum { UNUSED, SYMBOL, MACRO, MACRO_UNUSED, MACRO_LAB };
 #define MAXDUMS 20
 #define LSTBYTES 10
 
-/////////////////////////////////////////////////////////////
-//   FILE TO IMAGE
-
-
-#define STAND_ALONE 0
-
-void findfree(int);
-void err(char *errstr);
-void file_err(char *errstr, char filename[]);
-void check_sector(int sec);
-void file_to_image(char file_filename[], char diskimage_name[]);
-
-
-
-/**************************  prototypes  ***************/
-
 unsigned int expresstoi(void);
 unsigned int symtoi1(void);
 unsigned int expresstoi_p2(void);
