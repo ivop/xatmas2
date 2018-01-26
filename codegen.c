@@ -13,12 +13,6 @@
 #include <time.h>
 #include <unistd.h>
 
-// to be removed later:
-#define DOS_BLOCK_SIZE (333-4)*32-16
-static unsigned char dos25_block[(333 - 4) * 32 - 16] = {};
-#define DOS25_VOTC_DIR_SIZE 128+32
-static unsigned char dos25_votc_dir[128 + 32] = {};
-
 #define getch getchar
 #define fclose(x) if (x) { fclose(x); x=NULL; }
 
