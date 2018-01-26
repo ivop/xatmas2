@@ -24,7 +24,6 @@ typedef struct {                /* Define the structure ssstype */
     char symtyp;
 } ssstype;
 
-#define ATARI800 1
 #define PRINT_HEX_CODES 0
 #define SAVE_TESTXL 1
 #define VISUEL_C 1              /* Error under Borland Builder. Works, however, under Turbo C (DOS and TOS) */
@@ -178,9 +177,7 @@ unsigned short data[21][15] = {
 
 
 
-#if ATARI800
 unsigned int sgndtb[100], *sgndtbptr1, *sgndtbptr2, pcsv;
-#endif
 
 
 char double_byte_flg = 1;
@@ -458,9 +455,7 @@ int main(int argc, char *argv[]) {
 
     for (pass = 1; pass <= 2; pass++)
     {
-#if ATARI800
         sgndtbptr1 = sgndtbptr2 = sgndtb;
-#endif
         printf("\n  pass %d\n", pass);
         linptr = txtptr = txtbuf;
         xlbfptr = xlbuf;
@@ -1080,15 +1075,12 @@ int main(int argc, char *argv[]) {
                         orgflg = 1;
                     } else {
                         printf("to %4X\n", pc - 1);     /*write NDAD */
-#if ATARI800
                         *sgndtbptr1++ = pc - 1;
-#endif
                     }
 
 
                     pc = expresstoi();
 
-#if ATARI800
                     if (!objfile_flag) {
                         pcsv = pc;
                         toxlbuf(255);
@@ -1099,7 +1091,6 @@ int main(int argc, char *argv[]) {
                         toxlbuf((char)((*sgndtbptr2++) / 256));
                         pc = pcsv;
                     }
-#endif
                     printf("Segment %4X ", pc);
 
                 }
@@ -1550,10 +1541,7 @@ int main(int argc, char *argv[]) {
         if (twiceflg) {
             exit(1);
         }
-#if ATARI800
         *sgndtbptr1 = pc - 1;
-
-#endif
 
         /* for (i=0; i<symnum; i++)
            {
