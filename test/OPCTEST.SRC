@@ -1,3 +1,5 @@
+    NOHEADER
+
 START	EQU $2200
 
 BB	EPZ $80
