@@ -1,3 +1,3 @@
 #! /bin/sh
 
-gcc -o codegen codegen.c -g3 -W -Wall
+gcc -o xatmas2 xatmas2.c -g3 -W -Wall

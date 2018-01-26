@@ -2,6 +2,7 @@
  * xatmas2 - Atmas 2 compatible Cross-Assembler
  *
  * Copyright (C) 2004-2011 by Richard Jackman <richard.miles.jackman@gmail.com>
+ * Copyright (C) 2018 by Ivo van Poorten <ivopvp@gmail.com>
  * See LICENSE for details
  *
  */
@@ -255,7 +256,9 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
 
-    puts("xatmas2 - codegen v2.6.2 - by Richard Jackman");
+    puts("xatmas2 v2.6.2\n"
+         "Copyright (c) 2004-2011 by Richard Jackman\n"
+         "Copyright (c) 2018 by Ivo van Poorten\n");
 
     if (argc > 1)
         strcpy(src_filename, argv[1]);
