@@ -27,8 +27,6 @@ typedef struct {                /* Define the structure ssstype */
 
 #define PRINT_HEX_CODES 0
 #define SAVE_TESTXL 1
-#define VISUEL_C 1              /* Error under Borland Builder. Works, however, under Turbo C (DOS and TOS) */
-#define BORLAND 0               /* 2 Warnings under Visuel C */
 #define EXPRESSTOI_OLD 0
 #define LSTOLD 1
 
@@ -168,13 +166,7 @@ char src_filename[300];
 
 ssstype sss[MAXSYMS];
 
-/*int ssscmp(ssstype *dummy1,ssstype *dummy2); */
-#if VISUEL_C
 int ssscmpadr(const ssstype * dummy1, const ssstype * dummy2);
-#endif
-#if BORLAND
-int ssscmpadr(const void *dummy1, const void *dummy2);
-#endif
 
 FILE *stream;
 FILE *stream2;
@@ -2236,26 +2228,9 @@ void operand_to_filename(char filename[]) {
     strcpy(filename, operand);
 }
 
-
-
-#if VISUEL_C
 int ssscmpadr(const ssstype * a1, const ssstype * a2) {
     return (a1->symadr - a2->symadr);
 }
-#endif
-
-#if BORLAND
-int ssscmpadr(const void *dummy1, const void *dummy2) {
-    ssstype *a1, *a2;
-
-    a1 = dummy1;
-    a2 = dummy2;
-    return (a1->symadr - a2->symadr);
-}
-#endif
-
-
-
 
 void list_label(int i) {
     printf("%s\t", sss[i].symbol);
