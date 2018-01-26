@@ -1,11 +1,3 @@
-
-
-
-*	XFDIMAGE W1_DD.XFD
-	
-*	CPFL OPCTEST2.LOA
-
-	NOHEADER
 START	EQU $2200
 
 BB	EPZ $80
@@ -14,7 +6,7 @@ HHLL 	equ $4466
 
 CC	EQU $60
 
-	OUT LN
+*	OUT LN
 
 	ORG 0
 	
