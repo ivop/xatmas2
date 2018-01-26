@@ -166,13 +166,6 @@ FILE *stream2;
 FILE *stream3;
 fpos_t pos2;
 
-// to be removed:
-void file_to_image(char file_filename[], char diskimage_name[]) { }
-void file_err(char *errstr, char filename[]) {
-    printf("\n\n\aERROR: %s %s\n", errstr, filename);
-    exit(1);
-}
-
 static const char opcdat1[] = "BRKPHPASLCLCPLPROLSECRTIPHALSRCLIRTSPLARORSEI"
         "DEYTXATYATXSTAYTAXCLVTSXINYDEXCLDINXNOPSED";
 static const int dat1[] = { 0, 8, 10, 24, 40, 42, 56, 64, 72, 74, 88, 96, 104, 106,
@@ -1370,13 +1363,17 @@ int main(int argc, char *argv[]) {
     fclose(stream);
 
 /* LOA LOA LOA LOA LOA LOA LOA LOA LOA LOA LOA LOA LOA LOA LOA LOA LOA LOA LOA LOA LOA */
-    if ((stream = fopen(loafilename, "wb")) == NULL)
-        file_err("Can't open", loafilename);
+    if ((stream = fopen(loafilename, "wb")) == NULL) {
+        fprintf(stderr, "Can't open %s\n", loafilename);
+        exit(1);
+    }
 
     printf("\nSaving binary file %s\n", loafilename);
     txtsiz = fwrite(xlbuf, 1, xlbfptr - xlbuf, stream);
-    if (txtsiz != xlbfptr - xlbuf)
-        file_err("Can't save", loafilename);
+    if (txtsiz != xlbfptr - xlbuf) {
+        fprintf(stderr, "Can't save %s\n", loafilename);
+        exit(1);
+    }
     printf("%d bytes\n", txtsiz);
     fclose(stream);
 }
