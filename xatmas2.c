@@ -116,7 +116,6 @@ short labflg;
 short orgflg;
 short lstflg = 0;
 short include_flg;
-short mismatch_flg;
 short data_flg;
 short lensv;
 int bin;
@@ -746,6 +745,7 @@ void toxlbuf(char ch) {
 
 /********* chkopc    returns the position (0, 1, 2,.. ) of opc in string
 						returns -1 if not found */
+
 int chkopc(const char opcstring[]) {
     int cnt = 0;
     const char *ptr;
@@ -808,10 +808,10 @@ int main(int argc, char *argv[]) {
     short twiceflg = 0;
 
     char include_filename[300];
-
     char loafilename[300];
     char lstfilename[300];
     char filnmtmp[300];
+
     short lo_fg;
     short objfile_flag = 0;
     short rmbflg = 0;
@@ -861,7 +861,6 @@ int main(int argc, char *argv[]) {
 
     symnum = 0;
     *outflgs = 0;
-    mismatch_flg = 0;
     find_symad_flg = 1;
     maclevel = 0;
 
