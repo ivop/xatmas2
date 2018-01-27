@@ -147,19 +147,22 @@ fpos_t pos2;
 
 static const char opcdat1[] = "BRKPHPASLCLCPLPROLSECRTIPHALSRCLIRTSPLARORSEI"
         "DEYTXATYATXSTAYTAXCLVTSXINYDEXCLDINXNOPSED";
-static const int dat1[] = { 0, 8, 10, 24, 40, 42, 56, 64, 72, 74, 88, 96, 104, 106,
-    120, 136, 138, 152, 154, 168, 170, 184, 186, 200, 202, 216, 232, 234, 248
-    };
 
-static const char opcds[] = " BIT STY LDY CPY CPX ORA AND EOR ADC STA LDA CMP SBC "
-    "ASL ROL LSR ROR STX LDX DEC INC BRK PHP ASL CLC PLP ROL SEC RTI PHA LSR "
-    "CLI RTS PLA ROR SEI DEY TXA TYA TXS TAY TAX CLV TSX INY DEX CLD INX NOP "
-    "SED BPL BMI BVC BVS BCC BCS BNE BEQ JMP JSR ";     // for checking labels
+static const int dat1[] = { 0, 8, 10, 24, 40, 42, 56, 64, 72, 74, 88, 96, 104,
+    106, 120, 136, 138, 152, 154, 168, 170, 184, 186, 200, 202, 216, 232, 234,
+    248
+};
+
+static const char opcds[] =
+    " BIT STY LDY CPY CPX ORA AND EOR ADC STA LDA CMP SBC"
+    " ASL ROL LSR ROR STX LDX DEC INC BRK PHP ASL CLC PLP ROL SEC RTI PHA LSR"
+    " CLI RTS PLA ROR SEI DEY TXA TYA TXS TAY TAX CLV TSX INY DEX CLD INX NOP"
+    " SED BPL BMI BVC BVS BCC BCS BNE BEQ JMP JSR ";    // for checking labels
 
 static const char assdirecs[] =
-        " EQU EPZ ORG ASC DFB DFW ORG RMB INITRMB "
-        " FILLMEM INCLUDE ";
-static const char assdirecssolo[] = " OUT NOHEADER OBJFILE ";
+        " EQU EPZ ORG ASC DFB DFW ORG RMB INITRMB FILLMEM INCLUDE ";
+
+static const char assdirecssolo[] = " OUT NOHEADER ";
 
 static const char brastrdat[] = "BPLBMIBVCBVSBCCBCSBNEBEQ";
 static const unsigned short bradat[] =
@@ -1322,8 +1325,7 @@ int main(int argc, char *argv[]) {
 
 /* NOHEADER */
 
-            if ((strcmp(opcode, "NOHEADER") == 0)
-                || (strcmp(opcode, "OBJFILE") == 0)) {
+            if ((strcmp(opcode, "NOHEADER") == 0)) {
                 objfile_flag = 1;
                 continue;
             }
