@@ -15,7 +15,6 @@
 #include <unistd.h>
 #include <err.h>
 
-#define getch getchar
 #define fclose(x) if (x) { fclose(x); x=NULL; }
 
 typedef struct {                /* Define the structure ssstype */
