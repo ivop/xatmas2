@@ -25,22 +25,21 @@ typedef struct {                /* Define the structure ssstype */
     char symtyp;
 } ssstype;
 
-#define MAX_BIN_SIZ 0x1ffffL
-#define MAXSYMS 2000
-#define MAXMACSYMS 200
-#define MAXLOCLABS 50
-#define MXLBS 10                /* maximum # of labels in present macro */
-#define MAXMACLEV 10            /* maximum # ofnesting levels in macros */
-#define NOTFOUND 0xeffff
+#define MAX_BIN_SIZ     0x1ffffL
+#define MAXSYMS         2000
+#define MAXMACSYMS      200
+#define MAXLOCLABS      50
+#define MXLBS           10          // maximum # of labels in present macro
+#define MAXMACLEV       10          // maximum # ofnesting levels in macros
+#define NOTFOUND        0xeffff
+#define MAX_TXT_SIZ     0xfffffL
+#define MAXDUMS         20
+#define LSTBYTES        10
 
-#define MAX_TXT_SIZ 0xfffffL
 enum { OPC, NN, AA, AAAA, AAX, AAAAX, AAY, AAAAY, BAAXB, BAABY, BRA, BAAAAB,
     ERROR
 };
 enum { UNUSED, SYMBOL, MACRO, MACRO_UNUSED, MACRO_LAB };
-
-#define MAXDUMS 20
-#define LSTBYTES 10
 
 char opcdat[] =
     "BITSTYLDYCPYCPXORAANDEORADCSTALDACMPSBCASLROLLSRRORSTXLDXDECINC";
@@ -115,7 +114,6 @@ int cnt;
 short pass;
 short labflg;
 short orgflg;
-short cpfflg;
 short lstflg = 0;
 short include_flg;
 short mismatch_flg;
@@ -727,24 +725,6 @@ void toxlbuf(char ch) {
 
     if (pass == 2) {
         bytcnt++;
-        if (cpfflg) {
-            bin = fgetc(stream);
-            if (bin != (ch & 255)) {
-                if (mismatch_flg == 0) {
-                    mismatch_flg = 1;
-                    mismatch_linnum = linnum;
-                    mismatch_pc = pc;
-                }
-                if (mismatch_flg == 1) {
-                    if ((bytcnt == 1) && (data_flg == 0)) {
-                        mismatch_flg = 2;
-                        mismatch_linnum = linnum;
-                        mismatch_pc = pc;
-                    }
-                }
-            }
-
-        }
         if ((strchr(outflgs, 'L') || strchr(outflgs, 'l'))
             && !(strchr(outflgs, 'M') || strchr(outflgs, 'm'))) {
 
@@ -757,20 +737,6 @@ void toxlbuf(char ch) {
                     sprintf(prnlnbuf2[prnlnum - 1], "%4X: ", pc - 1);
                 }
                 strcat(prnlnbuf2[prnlnum - 1], tempstr);
-            }
-            if (cpfflg) {
-                if (bytcnt % LSTBYTES == 1) {
-                    if (bin != (ch & 255))
-                        sprintf(cmpflbytln[prnlnum], "******");
-                    else
-                        sprintf(cmpflbytln[prnlnum], "<><><>");
-                }
-                if (bin != (ch & 255)) {
-                    mismatchln_flg[prnlnum] = 1;
-                    sprintf(tempstr, "%02X)", bin);
-                } else
-                    sprintf(tempstr, "%02X ", bin);
-                strcat(cmpflbytln[prnlnum], tempstr);
             }
         }
     }
@@ -895,7 +861,6 @@ int main(int argc, char *argv[]) {
 
     symnum = 0;
     *outflgs = 0;
-    cpfflg = 0;
     mismatch_flg = 0;
     find_symad_flg = 1;
     maclevel = 0;
@@ -963,16 +928,10 @@ int main(int argc, char *argv[]) {
                     }
                     strcat(prnlnbufbeg, prnlnbuf);
                     fprintf(stream2, "%s", prnlnbufbeg);
-                    if (cpfflg)
-                        if (mismatchln_flg[0])
-                            fprintf(stream2, "%s\n", cmpflbytln[0]);
 
                     if (bytcnt > LSTBYTES) {
                         for (i = 1; i <= prnlnum; i++) {
                             fprintf(stream2, "%s\n", prnlnbuf2[i - 1]);
-                            if (cpfflg)
-                                if (mismatchln_flg[i])
-                                    fprintf(stream2, "%s\n", cmpflbytln[i]);
                         }
                     }
                     //fprintf (stream2,"%s\n",linbuf[maclevel]); ////
