@@ -43,21 +43,6 @@ enum { UNUSED, SYMBOL, MACRO, MACRO_UNUSED, MACRO_LAB };
 #define MAXDUMS 20
 #define LSTBYTES 10
 
-unsigned int expresstoi(void);
-unsigned int symtoi1(void);
-unsigned int expresstoi_p2(void);
-void error(char *errstr);
-int chkopc(const char opcstring[]);
-void toxlbuf(char ch);
-void find_operand(void);
-void operand_to_filename(char filename[]);
-void list_label(int i);
-void list_label_f(int i);       //label zu LIS file
-unsigned int symtoi3(char *strbeg);
-void sectyp(char line_type);
-char fptsmb(int i);
-int prec(char symbol);
-
 char opcdat[] =
     "BITSTYLDYCPYCPXORAANDEORADCSTALDACMPSBCASLROLLSRRORSTXLDXDECINC";
 
@@ -186,6 +171,631 @@ static const char brastrdat[] = "BPLBMIBVCBVSBCCBCSBNEBEQ";
 static const unsigned short bradat[] =
         { 0x10, 0x30, 0x50, 0x70, 0x90, 0xb0, 0xd0, 0xf0 };
 static const int intab[] = { 0x40, 0, 0x20, 0x60, 0xA0, 0xC0, 0x80, 0xE0 };
+
+// ----------------------------------------------------------------------------
+
+void error(char *errstr) {
+    int len;
+    char partstr[100];
+
+    printf("\n\nERROR --\n%s\nat ", errstr);
+    if (pc)
+        printf("address $%X, ", pc);
+    printf("line %d\n\n\a", linnum);
+    printf("%s", linbuf[0]);
+
+    if (maclevel == 0) {
+        len = txtptr - linbegptr;
+        strcpy(partstr, linbuf[0]);
+        partstr[len] = '\0';
+        printf("%s", partstr);
+    } else {
+        printf("Error in macro:\n%s", linbuf[maclevel]);
+    }
+    exit(linnum);
+}
+
+// ----------------------------------------------------------------------------
+
+int prec(char symbol) {
+    if (symbol == '(')
+        return 0;
+    if (symbol == ')')
+        return 0;
+    if (symbol == '+' || symbol == '-')
+        return 1;
+    if (symbol == '*' || symbol == '/')
+        return 2;
+    return 0;
+}
+
+// ----------------------------------------------------------------------------
+
+unsigned int symtoi3(char *strbeg) {
+    int i, j;
+
+    if (symnum == 0)
+        return (NOTFOUND);
+    i = 0;
+    while (i < symnum) {
+        j = 0;
+        while (sss[i].symbol[j] == strbeg[j]) {
+            if ((!strbeg[j] && !sss[i].symbol[j]))
+                return (sss[i].symadr);
+            j++;
+        }
+        i++;
+    }
+    return (NOTFOUND);
+}
+
+// ----------------------------------------------------------------------------
+
+/*********** symtoi1()
+ * converts symbol or number to integer (return value begins at txtptr.
+ * When done txtptr is the address directly after the location of symbol.
+ * If evaluation is not possible,the value returned is NOTFOUND
+ */
+unsigned int symtoi1() {
+    char strbeg[40];
+    char *ptr;
+    char ch;
+    unsigned int i, chrcnt;
+    ssstype *sssptr;
+
+    ptr = strbeg;
+    ch = *txtptr;
+    symfg = 0;
+
+
+
+    if (ch == '*') {            /* *:program counter) */
+        txtptr++;
+        return (pc);
+    }
+    if (isdigit(ch)) {          /*  :Decimal */
+        while (isdigit(*txtptr))
+            *ptr++ = *txtptr++;
+        *ptr = '\0';
+        return (atoi(strbeg));
+    }
+    if (ch == '%') {            /*  %:Binary */
+        txtptr++;
+        if (!(*txtptr == '0' || *txtptr == '1'))
+            error("Binary digit 0 or 1 expected.");
+        ch = 0;
+        chrcnt = 1;
+        while (*txtptr == '0' || *txtptr == '1') {
+            if (chrcnt++ > 8)
+                error
+                    ("Too many binary digits. Maximum number of digits is 8. e.g. %10010011");
+            ch <<= 1;
+            ch += *txtptr++ - '0';
+        }
+        return (ch);
+    }
+    if (ch == '$') {            /*  $:Hex */
+        txtptr++;
+        if (isxdigit(*txtptr) == 0)
+            error("Hexidecimal digit expected");
+        chrcnt = 1;
+        while (isxdigit(*txtptr)) {
+            if (chrcnt++ > 4)
+                error
+                    ("Too many hexdecimal digits. Maximum number of digits is 4 eg. $1234.");
+            *ptr++ = *txtptr++;
+        }
+        *ptr = '\0';
+        sscanf(strbeg, "%x", &i);
+        return (i);
+    }
+    if (*txtptr == '\'') {      /*  ':ASCII character */
+        txtptr++;
+        ch = *txtptr++;
+        if (*txtptr == '\'')
+            txtptr++;
+        return (ch);
+    }
+
+    switch (ch) {
+    case '+':
+        strcpy(strbeg, "PLUS");
+        break;
+    case '-':
+        strcpy(strbeg, "MINUS");
+        break;
+    default:                   //label
+        if (isspace(*txtptr))
+            error("Ilegal space, tab, or end of line");
+        if (!(isalpha(*txtptr)))
+            error("Label must begin with a letter");
+
+        while (isalnum(*txtptr))
+            *ptr++ = (char)toupper(*txtptr++);
+        *ptr = '\0';            //label
+    }
+
+//printf ("opcode: %s\tstrbeg: %s\n",operand,strbeg);
+
+    if (pass == 1) {
+        if (find_symad_flg)
+            return (symtoi3(strbeg));
+    } else {                    /* pass == 2 */
+
+        if ((strcmp(strbeg, "DO") == 0))
+            sprintf(strbeg, "DO%4.4i", donum);
+        if ((strcmp(strbeg, "LOOP") == 0))
+            sprintf(strbeg, "LOOP%4.4i", loopnum);
+        if ((strcmp(strbeg, "MINUS") == 0))
+            sprintf(strbeg, "MINU%4.4i", minusnum);
+        if ((strcmp(strbeg, "PLUS") == 0))
+            sprintf(strbeg, "PLUS%4.4i", plusnum);
+        if ((strcmp(strbeg, "SKIP") == 0))
+            sprintf(strbeg, "SKIP%4.4i", skipnum);
+        if ((strcmp(strbeg, "CONT") == 0))
+            sprintf(strbeg, "CONT%4.4i", contnum);
+        if ((strcmp(strbeg, "ENDIF") == 0))
+            sprintf(strbeg, "ENDI%4.4i", endifnum);
+
+        if ((sssptr =
+             bsearch(strbeg, sss, symnum, sizeof(ssstype), (int (*)(const void *, const void *)) strcmp)) != 0) {
+            if (maclevel)
+                sssptr->macf = MACRO_LAB;
+            else
+                sssptr->macf = SYMBOL;
+
+            if (*txtptr == '+') {
+                if ((*(txtptr + 1) - '0') > sssptr->ofst)
+                    sssptr->ofst = *(txtptr + 1) - '0';
+                if (*(txtptr + 2) == '+')       //These two lines take care
+                    sssptr->ofst = sssptr->ofst + *(txtptr + 3) - '0';  //of hidden labels 
+            }
+            if (*txtptr == '-')
+                sssptr->ofst = (char)(256 - (*(txtptr + 1) - '0'));
+
+            symfg = 1;
+            return (sssptr->symadr);
+        } else {
+            error("label undefined");
+        }
+    }
+//if (pass == 2) error("Label undefined"); //probably don't need this
+    return (NOTFOUND);
+}
+
+// ----------------------------------------------------------------------------
+
+static unsigned int expresstoi() {
+    int i;
+    int result = 0;
+
+    char notfound = 0;
+    char *tptrsv, *ptr;
+    char infix[50], postfix[50];
+    int symval_list[30];
+    int symval_cnt = 0;
+
+    int j = 0, k = 0, length;
+    char temp;
+    char stack[30];
+    int intstack[30];
+    int tos = 0;
+    int a, b;
+
+
+
+    tptrsv = txtptr;
+    ptr = infix;
+
+// tokenise ************
+
+    if (*operand == '(')
+        *ptr++ = '(';           //because txtptr++ if beginning bracket
+
+
+    if (isspace(*(txtptr + 1)))
+        if ((*txtptr == '-') || (*txtptr == '+'))
+            return (symtoi1()); // "- " is DO, "+ " is CONT
+
+
+    do {
+        switch (*txtptr) {
+        case '+':
+        case '-':
+            if ((tptrsv == txtptr) || (*(txtptr - 1) == '(')) {
+                symval_list[symval_cnt] = 0;
+                *ptr++ = symval_cnt++ + 'A';
+            }
+        case '/':
+        case '*':
+        case ')':
+        case '(':
+            *ptr++ = *txtptr++;
+            break;
+        default:
+
+            if ((symval_list[symval_cnt] = symtoi1()) == NOTFOUND)
+                notfound = 1;
+            *ptr++ = symval_cnt++ + 'A';
+        }
+    } while (!(isspace(*txtptr) || (*txtptr == ',') || (*txtptr == ':')));
+
+    if (*txtptr == ',')         //if ",X)"
+        if (*(txtptr + 1) == 'X' || *(txtptr + 1) == 'x')
+            if (*(txtptr + 2) == ')')
+                if (isspace(*(txtptr + 3)))
+                    *ptr++ = ')';       // add ')'
+
+    *ptr = '\0';
+    //printf ("%s\n",infix);
+// interpret '*'  *******
+
+
+    ptr = strchr(infix, '*');
+    while (ptr) {
+        if (!isalpha(*(ptr + 1)) && (*(ptr + 1) != '(')) {
+            symval_list[symval_cnt] = pc;
+            *ptr = symval_cnt++ + 'A';
+        }
+
+        ptr = strchr(++ptr, '*');
+    }
+
+//convert to postfix  *********
+
+    i = j = k = length = 0;
+
+    length = strlen(infix);
+    for (i = 0; i < length; i++) {
+        if (!strchr("+-*/()", infix[i]))        //Numbers are added to the postfix string
+            postfix[j++] = infix[i];
+
+        else                    //If an operator or a bracket is encountered...
+        {
+            if (tos == 0)       //If the stack is empty, the operator is added to it
+
+                stack[tos++] = infix[i];
+
+            else                //stack not empty
+            {                   //Operators are pushed or popped based on the order of precedence
+                if (infix[i] != ')' && infix[i] != '(') {
+                    if (prec(infix[i]) <= prec(stack[tos - 1]))
+                        postfix[j++] = stack[--tos];
+                    stack[tos++] = infix[i];
+                } else {
+                    if (infix[i] == '(')
+                        stack[tos++] = infix[i];
+
+                    if (infix[i] == ')') {
+                        temp = stack[--tos];
+                        while (temp != '(') {
+                            postfix[j++] = temp;
+                            if (tos == 0)
+                                error("Missing opening parenthisis");
+                            temp = stack[--tos];
+                        }
+                    }
+                }
+
+            }
+
+        }
+        postfix[j] = '\0';
+
+    }
+    while (tos != 0) {
+        postfix[j++] = stack[--tos];
+    }
+    postfix[j] = '\0';
+
+
+// convert postfix to int ***************
+
+
+    tos = 0;
+    ptr = postfix;
+    while (*ptr) {
+        if (isalpha(*ptr))
+            intstack[tos++] = symval_list[*ptr - 'A'];
+        else {
+            b = intstack[--tos];
+            a = intstack[--tos];
+
+            switch (*ptr) {
+            case '+':
+                intstack[tos++] = a + b;
+                break;
+            case '-':
+                intstack[tos++] = a - b;
+                break;
+            case '*':
+                intstack[tos++] = a * b;
+                break;
+            case '/':
+                intstack[tos++] = a / b;
+                break;
+            default:
+                if (*ptr == '(')
+                    error("Missing closing parenthisis");
+                printf("infix: %s   -Character '%c' in %s  operand is %s",
+                       infix, *ptr, postfix, operand);
+                error("Illegal character in postfix expression");
+                break;
+            }
+        }
+        ptr++;
+    }
+
+    if (strstr(opcode, "),Y"))
+        txtptr--;
+    result = intstack[--tos];
+
+    if (tos) {
+        printf("\n\noperand: %s   infix: %s   postfix: %s", operand, infix,
+               postfix);
+        error("Illegal syntax. Can't resolve expression");
+    }
+
+    if (notfound)
+        result = NOTFOUND;
+    return (result);
+}
+
+// ----------------------------------------------------------------------------
+
+unsigned int expresstoi_p2() {
+    unsigned int val;
+
+    find_symad_flg = 0;
+    val = expresstoi();
+    find_symad_flg++;
+    return (val);
+}
+
+// ----------------------------------------------------------------------------
+
+char fptsmb(int i) {
+    char *lnbfptr;
+    int cnt;
+    char len;
+
+    if ((sss[i].symadr == sss[i - 1].symadr) && (i > 0)) {      /* double entry */
+        if (sss[i - 1].symbol[0])
+            strcpy(sss[i].symbol, sss[i - 1].symbol);
+        if (sss[i - 1].symtyp)
+            sss[i].symtyp = sss[i - 1].symtyp;
+        secsiz -= lensv;
+        fsetpos(stream, &pos2);
+    }
+    lnbfptr = linbuf[0];
+    cnt = 0;
+    if (sss[i].macf == MACRO)
+        return (0);
+    while (sss[i].symbol[cnt])
+        *lnbfptr++ = sss[i].symbol[cnt++];
+    if (sss[i].symtyp) {
+        *lnbfptr = sss[i].symtyp;
+        cnt++;
+    }
+    len = cnt + 4;
+    fgetpos(stream, &pos2);
+    fputc((char)sss[i].symadr, stream);
+    fputc((char)((sss[i].symadr) >> 8), stream);
+    fputc(sss[i].ofst, stream);
+    fputc(len, stream);
+    lnbfptr = linbuf[0];
+    while (cnt) {
+        fputc(*lnbfptr++, stream);
+        cnt--;
+    }
+    return (len);
+}
+
+// ----------------------------------------------------------------------------
+
+void sectyp(char line_type) {
+    if (!labflg && (line_type == ';') && strchr("!&'", section_type))
+        line_type = section_type;
+
+
+    if ((line_type != section_type) || labflg)  // if new sec type or a label
+    {
+        section_type = line_type;
+        if (labflg)             //if there is a label....
+        {
+            if (pass == 1)
+                /**/ {
+                if (line_type == ';')   //with normal code (;)..
+                    sss[symnum - 1].symtyp = 0; // label is enough, so no entry
+                else
+                    sss[symnum - 1].symtyp = line_type; // else make entry
+                }
+            if ((pass == 2) && (line_type == '&'))
+                /**/ {
+                sss[symnum - 1].symtyp = line_type;
+                }
+
+
+        } else /* no label */ if ((pass == 2) && (pc > 0xff)) {
+            if (symnumext >= MAXSYMS)
+                error("Too many symbols");
+            sss[symnumext].symtyp = line_type;
+            sss[symnumext++].symadr = pc;
+        }
+    }
+}
+
+
+// ----------------------------------------------------------------------------
+
+int ssscmpadr(const ssstype * a1, const ssstype * a2) {
+    return (a1->symadr - a2->symadr);
+}
+
+// ----------------------------------------------------------------------------
+
+void list_label(int i) {
+    printf("%s\t", sss[i].symbol);
+    if (sss[i].macf == MACRO)
+        printf("MACRO\n");
+    else
+        printf(" = %X\n", sss[i].symadr);
+}
+
+// ----------------------------------------------------------------------------
+
+void list_label_f(int i) {
+    fprintf(stream2, "%s\t", sss[i].symbol);
+    if (sss[i].macf == MACRO)
+        fprintf(stream2, "MACRO\n");
+    else
+        fprintf(stream2, " = %X\n", sss[i].symadr);
+}
+
+// ----------------------------------------------------------------------------
+
+void operand_to_filename(char filename[]) {
+
+    int cnt = 0;
+    char *linptr;
+
+    switch (*txtptr++) {
+    case '\n':
+    case '\t':
+        error("Filename missing");
+        break;
+    case ' ':
+        linptr = txtptr;
+        if (!strchr(" \t\n", *txtptr)) {        /* there is an operand */
+            if (*linptr == '"') {
+                for (;;) {      /* create operand[] */
+                    operand[cnt++] = *linptr++;
+                    if (strchr("\"\t\n", *linptr)) {
+                        operand[cnt++] = *linptr++;
+                        break;
+                    }
+
+                }
+            } else {
+                while (!(strchr(" \t\n", *linptr))) {   /* create operand[] */
+                    operand[cnt++] = *linptr++;
+                }
+            }
+        } else
+            error("Filename missing");
+        break;
+    }
+    operand[cnt] = 0;
+    strcpy(filename, operand);
+}
+
+// ----------------------------------------------------------------------------
+
+void find_operand(void) {
+    int cnt = 0;
+    char *linptr;
+
+    switch (*txtptr++) {
+    case '\n':
+    case '\t':
+        break;
+    case ' ':
+        linptr = txtptr;
+        if (!strchr(" \t\n", *txtptr)) {        /* there is an operand */
+            if (*txtptr == '(')
+                txtptr++;
+            while (!(strchr(" \t\n", *linptr))) {       /* create operand[] */
+
+                operand[cnt++] = *linptr++;
+            }
+        }
+    }
+    operand[cnt] = 0;
+}
+
+// ----------------------------------------------------------------------------
+
+void toxlbuf(char ch) {
+    char tempstr[10];
+
+    if (!orgflg)
+        error("ORG value must precede this line");
+
+    *xlbfptr = ch;
+
+    xlbfptr++;
+    pc++;
+
+    if (pass == 2) {
+        bytcnt++;
+        if (cpfflg) {
+            bin = fgetc(stream);
+            if (bin != (ch & 255)) {
+                if (mismatch_flg == 0) {
+                    mismatch_flg = 1;
+                    mismatch_linnum = linnum;
+                    mismatch_pc = pc;
+                }
+                if (mismatch_flg == 1) {
+                    if ((bytcnt == 1) && (data_flg == 0)) {
+                        mismatch_flg = 2;
+                        mismatch_linnum = linnum;
+                        mismatch_pc = pc;
+                    }
+                }
+            }
+
+        }
+        if ((strchr(outflgs, 'L') || strchr(outflgs, 'l'))
+            && !(strchr(outflgs, 'M') || strchr(outflgs, 'm'))) {
+
+            sprintf(tempstr, "%02X ", ch & 255);
+            if (bytcnt <= LSTBYTES)
+                strcat(prnlnbufbeg, tempstr);
+            else {
+                if (bytcnt % LSTBYTES == 1) {
+                    prnlnum++;
+                    sprintf(prnlnbuf2[prnlnum - 1], "%4X: ", pc - 1);
+                }
+                strcat(prnlnbuf2[prnlnum - 1], tempstr);
+            }
+            if (cpfflg) {
+                if (bytcnt % LSTBYTES == 1) {
+                    if (bin != (ch & 255))
+                        sprintf(cmpflbytln[prnlnum], "******");
+                    else
+                        sprintf(cmpflbytln[prnlnum], "<><><>");
+                }
+                if (bin != (ch & 255)) {
+                    mismatchln_flg[prnlnum] = 1;
+                    sprintf(tempstr, "%02X)", bin);
+                } else
+                    sprintf(tempstr, "%02X ", bin);
+                strcat(cmpflbytln[prnlnum], tempstr);
+            }
+        }
+    }
+}
+
+// ----------------------------------------------------------------------------
+
+/********* chkopc    returns the position (0, 1, 2,.. ) of opc in string
+						returns -1 if not found */
+int chkopc(const char opcstring[]) {
+    int cnt = 0;
+    const char *ptr;
+
+    if (*(opcode + 3))
+        return (-1);
+    ptr = opcstring;
+    while (*ptr) {
+        if (!memcmp(opcode, ptr, 3))
+            return (cnt);
+        ptr += 3;
+        cnt++;
+    }
+    return (-1);
+}
 
 // ----------------------------------------------------------------------------
 
@@ -1378,612 +1988,4 @@ int main(int argc, char *argv[]) {
     fclose(stream);
 }
 
-unsigned int expresstoi() {
-    int i;
-    int result = 0;
 
-    char notfound = 0;
-    char *tptrsv, *ptr;
-    char infix[50], postfix[50];
-    int symval_list[30];
-    int symval_cnt = 0;
-
-    int j = 0, k = 0, length;
-    char temp;
-    char stack[30];
-    int intstack[30];
-    int tos = 0;
-    int a, b;
-
-
-
-    tptrsv = txtptr;
-    ptr = infix;
-
-// tokenise ************
-
-    if (*operand == '(')
-        *ptr++ = '(';           //because txtptr++ if beginning bracket
-
-
-    if (isspace(*(txtptr + 1)))
-        if ((*txtptr == '-') || (*txtptr == '+'))
-            return (symtoi1()); // "- " is DO, "+ " is CONT
-
-
-    do {
-        switch (*txtptr) {
-        case '+':
-        case '-':
-            if ((tptrsv == txtptr) || (*(txtptr - 1) == '(')) {
-                symval_list[symval_cnt] = 0;
-                *ptr++ = symval_cnt++ + 'A';
-            }
-        case '/':
-        case '*':
-        case ')':
-        case '(':
-            *ptr++ = *txtptr++;
-            break;
-        default:
-
-            if ((symval_list[symval_cnt] = symtoi1()) == NOTFOUND)
-                notfound = 1;
-            *ptr++ = symval_cnt++ + 'A';
-        }
-    } while (!(isspace(*txtptr) || (*txtptr == ',') || (*txtptr == ':')));
-
-    if (*txtptr == ',')         //if ",X)"
-        if (*(txtptr + 1) == 'X' || *(txtptr + 1) == 'x')
-            if (*(txtptr + 2) == ')')
-                if (isspace(*(txtptr + 3)))
-                    *ptr++ = ')';       // add ')'
-
-    *ptr = '\0';
-    //printf ("%s\n",infix);
-// interpret '*'  *******
-
-
-    ptr = strchr(infix, '*');
-    while (ptr) {
-        if (!isalpha(*(ptr + 1)) && (*(ptr + 1) != '(')) {
-            symval_list[symval_cnt] = pc;
-            *ptr = symval_cnt++ + 'A';
-        }
-
-        ptr = strchr(++ptr, '*');
-    }
-
-//convert to postfix  *********
-
-    i = j = k = length = 0;
-
-    length = strlen(infix);
-    for (i = 0; i < length; i++) {
-        if (!strchr("+-*/()", infix[i]))        //Numbers are added to the postfix string
-            postfix[j++] = infix[i];
-
-        else                    //If an operator or a bracket is encountered...
-        {
-            if (tos == 0)       //If the stack is empty, the operator is added to it
-
-                stack[tos++] = infix[i];
-
-            else                //stack not empty
-            {                   //Operators are pushed or popped based on the order of precedence
-                if (infix[i] != ')' && infix[i] != '(') {
-                    if (prec(infix[i]) <= prec(stack[tos - 1]))
-                        postfix[j++] = stack[--tos];
-                    stack[tos++] = infix[i];
-                } else {
-                    if (infix[i] == '(')
-                        stack[tos++] = infix[i];
-
-                    if (infix[i] == ')') {
-                        temp = stack[--tos];
-                        while (temp != '(') {
-                            postfix[j++] = temp;
-                            if (tos == 0)
-                                error("Missing opening parenthisis");
-                            temp = stack[--tos];
-                        }
-                    }
-                }
-
-            }
-
-        }
-        postfix[j] = '\0';
-
-    }
-    while (tos != 0) {
-        postfix[j++] = stack[--tos];
-    }
-    postfix[j] = '\0';
-
-
-// convert postfix to int ***************
-
-
-    tos = 0;
-    ptr = postfix;
-    while (*ptr) {
-        if (isalpha(*ptr))
-            intstack[tos++] = symval_list[*ptr - 'A'];
-        else {
-            b = intstack[--tos];
-            a = intstack[--tos];
-
-            switch (*ptr) {
-            case '+':
-                intstack[tos++] = a + b;
-                break;
-            case '-':
-                intstack[tos++] = a - b;
-                break;
-            case '*':
-                intstack[tos++] = a * b;
-                break;
-            case '/':
-                intstack[tos++] = a / b;
-                break;
-            default:
-                if (*ptr == '(')
-                    error("Missing closing parenthisis");
-                printf("infix: %s   -Character '%c' in %s  operand is %s",
-                       infix, *ptr, postfix, operand);
-                error("Illegal character in postfix expression");
-                break;
-            }
-        }
-        ptr++;
-    }
-
-    if (strstr(opcode, "),Y"))
-        txtptr--;
-    result = intstack[--tos];
-
-//              if (tos) error ("Illegal syntax in expression");
-    if (tos) {
-
-        printf("\n\noperand: %s   infix: %s   postfix: %s", operand, infix,
-               postfix);
-        error("Illegal syntax. Can't resolve expression");
-    }
-
-    if (notfound)
-        result = NOTFOUND;
-//printf( "Result is $%x  %i\n\n********************************************\n\n",result,result);
-    return (result);
-}
-
-
-int prec(char symbol) {
-
-    if (symbol == '(')
-        return 0;
-    if (symbol == ')')
-        return 0;
-    if (symbol == '+' || symbol == '-')
-        return 1;
-    if (symbol == '*' || symbol == '/')
-        return 2;
-    return 0;
-}
-
-/********************* expresstoi_p2 ****************************/
-
-
-unsigned int expresstoi_p2() {
-    unsigned int val;
-
-    find_symad_flg = 0;
-    val = expresstoi();
-    find_symad_flg++;
-    return (val);
-}
-
-/*********** symtoi1()
- * converts symbol or number to integer (return value begins at txtptr.
- * When done txtptr is the address directly after the location of symbol.
- * If evaluation is not possible,the value returned is NOTFOUND
- */
-unsigned int symtoi1() {
-    char strbeg[40];
-    char *ptr;
-    char ch;
-    unsigned int i, chrcnt;
-    ssstype *sssptr;
-
-    ptr = strbeg;
-    ch = *txtptr;
-    symfg = 0;
-
-
-
-    if (ch == '*') {            /* *:program counter) */
-        txtptr++;
-        return (pc);
-    }
-    if (isdigit(ch)) {          /*  :Decimal */
-        while (isdigit(*txtptr))
-            *ptr++ = *txtptr++;
-        *ptr = '\0';
-        return (atoi(strbeg));
-    }
-    if (ch == '%') {            /*  %:Binary */
-        txtptr++;
-        if (!(*txtptr == '0' || *txtptr == '1'))
-            error("Binary digit 0 or 1 expected.");
-        ch = 0;
-        chrcnt = 1;
-        while (*txtptr == '0' || *txtptr == '1') {
-            if (chrcnt++ > 8)
-                error
-                    ("Too many binary digits. Maximum number of digits is 8. e.g. %10010011");
-            ch <<= 1;
-            ch += *txtptr++ - '0';
-        }
-        return (ch);
-    }
-    if (ch == '$') {            /*  $:Hex */
-        txtptr++;
-        if (isxdigit(*txtptr) == 0)
-            error("Hexidecimal digit expected");
-        chrcnt = 1;
-        while (isxdigit(*txtptr)) {
-            if (chrcnt++ > 4)
-                error
-                    ("Too many hexdecimal digits. Maximum number of digits is 4 eg. $1234.");
-            *ptr++ = *txtptr++;
-        }
-        *ptr = '\0';
-        sscanf(strbeg, "%x", &i);
-        return (i);
-    }
-    if (*txtptr == '\'') {      /*  ':ASCII character */
-        txtptr++;
-        ch = *txtptr++;
-        if (*txtptr == '\'')
-            txtptr++;
-        return (ch);
-    }
-
-    switch (ch) {
-    case '+':
-        strcpy(strbeg, "PLUS");
-        break;
-    case '-':
-        strcpy(strbeg, "MINUS");
-        break;
-    default:                   //label
-        if (isspace(*txtptr))
-            error("Ilegal space, tab, or end of line");
-        if (!(isalpha(*txtptr)))
-            error("Label must begin with a letter");
-
-        while (isalnum(*txtptr))
-            *ptr++ = (char)toupper(*txtptr++);
-        *ptr = '\0';            //label
-    }
-
-//printf ("opcode: %s\tstrbeg: %s\n",operand,strbeg);
-
-    if (pass == 1) {
-        if (find_symad_flg)
-            return (symtoi3(strbeg));
-    } else {                    /* pass == 2 */
-
-        if ((strcmp(strbeg, "DO") == 0))
-            sprintf(strbeg, "DO%4.4i", donum);
-        if ((strcmp(strbeg, "LOOP") == 0))
-            sprintf(strbeg, "LOOP%4.4i", loopnum);
-        if ((strcmp(strbeg, "MINUS") == 0))
-            sprintf(strbeg, "MINU%4.4i", minusnum);
-        if ((strcmp(strbeg, "PLUS") == 0))
-            sprintf(strbeg, "PLUS%4.4i", plusnum);
-        if ((strcmp(strbeg, "SKIP") == 0))
-            sprintf(strbeg, "SKIP%4.4i", skipnum);
-        if ((strcmp(strbeg, "CONT") == 0))
-            sprintf(strbeg, "CONT%4.4i", contnum);
-        if ((strcmp(strbeg, "ENDIF") == 0))
-            sprintf(strbeg, "ENDI%4.4i", endifnum);
-
-        if ((sssptr =
-             bsearch(strbeg, sss, symnum, sizeof(ssstype), (int (*)(const void *, const void *)) strcmp)) != 0) {
-            if (maclevel)
-                sssptr->macf = MACRO_LAB;
-            else
-                sssptr->macf = SYMBOL;
-
-            if (*txtptr == '+') {
-                if ((*(txtptr + 1) - '0') > sssptr->ofst)
-                    sssptr->ofst = *(txtptr + 1) - '0';
-                if (*(txtptr + 2) == '+')       //These two lines take care
-                    sssptr->ofst = sssptr->ofst + *(txtptr + 3) - '0';  //of hidden labels 
-            }
-            if (*txtptr == '-')
-                sssptr->ofst = (char)(256 - (*(txtptr + 1) - '0'));
-
-            symfg = 1;
-            return (sssptr->symadr);
-        } else {
-            error("label undefined");
-        }
-    }
-//if (pass == 2) error("Label undefined"); //probably don't need this
-    return (NOTFOUND);
-}
-
-/********* chkopc    returns the position (0, 1, 2,.. ) of opc in string
-						returns -1 if not found
-						*/
-int chkopc(const char opcstring[]) {
-    int cnt = 0;
-    const char *ptr;
-
-    if (*(opcode + 3))
-        return (-1);
-    ptr = opcstring;
-    while (*ptr) {
-        if (!memcmp(opcode, ptr, 3))
-            return (cnt);
-        ptr += 3;
-        cnt++;
-    }
-    return (-1);
-}
-
-/********* error **********/
-
-void error(char *errstr) {
-    int len;
-    char partstr[100];
-
-    printf("\n\nERROR --\n%s\nat ", errstr);
-    if (pc)
-        printf("address $%X, ", pc);
-    printf("line %d\n\n\a", linnum);
-    printf("%s", linbuf[0]);
-
-    if (maclevel == 0) {
-        len = txtptr - linbegptr;
-        strcpy(partstr, linbuf[0]);
-        partstr[len] = '\0';
-        printf("%s", partstr);
-    } else {
-        printf("Error in macro:\n%s", linbuf[maclevel]);
-    }
-    exit(linnum);
-}
-
-void toxlbuf(char ch) {
-    char tempstr[10];
-
-    if (!orgflg)
-        error("ORG value must precede this line");
-
-    *xlbfptr = ch;
-
-    xlbfptr++;
-    pc++;
-
-    if (pass == 2) {
-        bytcnt++;
-        if (cpfflg) {
-            bin = fgetc(stream);
-            if (bin != (ch & 255)) {
-                if (mismatch_flg == 0) {
-                    mismatch_flg = 1;
-                    mismatch_linnum = linnum;
-                    mismatch_pc = pc;
-                }
-                if (mismatch_flg == 1) {
-                    if ((bytcnt == 1) && (data_flg == 0)) {
-                        mismatch_flg = 2;
-                        mismatch_linnum = linnum;
-                        mismatch_pc = pc;
-                    }
-                }
-            }
-
-        }
-        if ((strchr(outflgs, 'L') || strchr(outflgs, 'l'))
-            && !(strchr(outflgs, 'M') || strchr(outflgs, 'm'))) {
-
-            sprintf(tempstr, "%02X ", ch & 255);
-            if (bytcnt <= LSTBYTES)
-                strcat(prnlnbufbeg, tempstr);
-            else {
-                if (bytcnt % LSTBYTES == 1) {
-                    prnlnum++;
-                    sprintf(prnlnbuf2[prnlnum - 1], "%4X: ", pc - 1);
-                }
-                strcat(prnlnbuf2[prnlnum - 1], tempstr);
-            }
-            if (cpfflg) {
-                if (bytcnt % LSTBYTES == 1) {
-                    if (bin != (ch & 255))
-                        sprintf(cmpflbytln[prnlnum], "******");
-                    else
-                        sprintf(cmpflbytln[prnlnum], "<><><>");
-                }
-                if (bin != (ch & 255)) {
-                    mismatchln_flg[prnlnum] = 1;
-                    sprintf(tempstr, "%02X)", bin);
-                } else
-                    sprintf(tempstr, "%02X ", bin);
-                strcat(cmpflbytln[prnlnum], tempstr);
-            }
-        }
-    }
-}
-
-
-
-/*		*************** Operand *****************     */
-void find_operand(void) {
-
-    int cnt = 0;
-    char *linptr;
-
-    switch (*txtptr++) {
-    case '\n':
-    case '\t':
-        break;
-    case ' ':
-        linptr = txtptr;
-        if (!strchr(" \t\n", *txtptr)) {        /* there is an operand */
-            if (*txtptr == '(')
-                txtptr++;
-            while (!(strchr(" \t\n", *linptr))) {       /* create operand[] */
-
-                operand[cnt++] = *linptr++;
-            }
-        }
-    }
-    operand[cnt] = 0;
-}
-
-/* *************** src_filename Operand *****************     */
-void operand_to_filename(char filename[]) {
-
-    int cnt = 0;
-    char *linptr;
-
-    switch (*txtptr++) {
-    case '\n':
-    case '\t':
-        error("Filename missing");
-        break;
-    case ' ':
-        linptr = txtptr;
-        if (!strchr(" \t\n", *txtptr)) {        /* there is an operand */
-            if (*linptr == '"') {
-                for (;;) {      /* create operand[] */
-                    operand[cnt++] = *linptr++;
-                    if (strchr("\"\t\n", *linptr)) {
-                        operand[cnt++] = *linptr++;
-                        break;
-                    }
-
-                }
-            } else {
-                while (!(strchr(" \t\n", *linptr))) {   /* create operand[] */
-                    operand[cnt++] = *linptr++;
-                }
-            }
-        } else
-            error("Filename missing");
-        break;
-    }
-    operand[cnt] = 0;
-    strcpy(filename, operand);
-}
-
-int ssscmpadr(const ssstype * a1, const ssstype * a2) {
-    return (a1->symadr - a2->symadr);
-}
-
-void list_label(int i) {
-    printf("%s\t", sss[i].symbol);
-    if (sss[i].macf == MACRO)
-        printf("MACRO\n");
-    else
-        printf(" = %X\n", sss[i].symadr);
-}
-
-void list_label_f(int i) {
-    fprintf(stream2, "%s\t", sss[i].symbol);
-    if (sss[i].macf == MACRO)
-        fprintf(stream2, "MACRO\n");
-    else
-        fprintf(stream2, " = %X\n", sss[i].symadr);
-}
-
-unsigned int symtoi3(char *strbeg) {
-    int i, j;
-
-    if (symnum == 0)
-        return (NOTFOUND);
-    i = 0;
-    while (i < symnum) {
-        j = 0;
-        while (sss[i].symbol[j] == strbeg[j]) {
-            if ((!strbeg[j] && !sss[i].symbol[j]))
-                return (sss[i].symadr);
-            j++;
-        }
-        i++;
-    }
-    return (NOTFOUND);
-}
-
-void sectyp(char line_type) {
-    if (!labflg && (line_type == ';') && strchr("!&'", section_type))
-        line_type = section_type;
-
-
-    if ((line_type != section_type) || labflg)  // if new sec type or a label
-    {
-        section_type = line_type;
-        if (labflg)             //if there is a label....
-        {
-            if (pass == 1)
-                /**/ {
-                if (line_type == ';')   //with normal code (;)..
-                    sss[symnum - 1].symtyp = 0; // label is enough, so no entry
-                else
-                    sss[symnum - 1].symtyp = line_type; // else make entry
-                }
-            if ((pass == 2) && (line_type == '&'))
-                /**/ {
-                sss[symnum - 1].symtyp = line_type;
-                }
-
-
-        } else /* no label */ if ((pass == 2) && (pc > 0xff)) {
-            if (symnumext >= MAXSYMS)
-                error("Too many symbols");
-            sss[symnumext].symtyp = line_type;
-            sss[symnumext++].symadr = pc;
-        }
-    }
-}
-
-char fptsmb(int i) {
-    char *lnbfptr;
-    int cnt;
-    char len;
-
-    if ((sss[i].symadr == sss[i - 1].symadr) && (i > 0)) {      /* double entry */
-        if (sss[i - 1].symbol[0])
-            strcpy(sss[i].symbol, sss[i - 1].symbol);
-        if (sss[i - 1].symtyp)
-            sss[i].symtyp = sss[i - 1].symtyp;
-        secsiz -= lensv;
-        fsetpos(stream, &pos2);
-    }
-    lnbfptr = linbuf[0];
-    cnt = 0;
-    if (sss[i].macf == MACRO)
-        return (0);
-    while (sss[i].symbol[cnt])
-        *lnbfptr++ = sss[i].symbol[cnt++];
-    if (sss[i].symtyp) {
-        *lnbfptr = sss[i].symtyp;
-        cnt++;
-    }
-    len = cnt + 4;
-    fgetpos(stream, &pos2);
-    fputc((char)sss[i].symadr, stream);
-    fputc((char)((sss[i].symadr) >> 8), stream);
-    fputc(sss[i].ofst, stream);
-    fputc(len, stream);
-    lnbfptr = linbuf[0];
-    while (cnt) {
-        fputc(*lnbfptr++, stream);
-        cnt--;
-    }
-    return (len);
-}
