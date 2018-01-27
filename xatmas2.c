@@ -203,19 +203,11 @@ static int prec(char symbol) {
 // ----------------------------------------------------------------------------
 
 static unsigned int symtoi3(char *strbeg) {
-    int i, j;
-
-    if (symnum == 0)
-        return (NOTFOUND);
-    i = 0;
-    while (i < symnum) {
-        j = 0;
-        while (sss[i].symbol[j] == strbeg[j]) {
-            if ((!strbeg[j] && !sss[i].symbol[j]))
-                return (sss[i].symadr);
-            j++;
+    if (symnum == 0) return (NOTFOUND);
+    for (int i=0; i<symnum; i++) {
+        for (int j=0; sss[i].symbol[j] == strbeg[j]; j++) {
+            if ((!strbeg[j] && !sss[i].symbol[j])) return (sss[i].symadr);
         }
-        i++;
     }
     return (NOTFOUND);
 }
