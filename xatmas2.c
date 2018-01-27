@@ -364,8 +364,6 @@ static unsigned int expresstoi() {
     int tos = 0;
     int a, b;
 
-
-
     tptrsv = txtptr;
     ptr = infix;
 
@@ -410,8 +408,6 @@ static unsigned int expresstoi() {
 
     *ptr = '\0';
     //printf ("%s\n",infix);
-// interpret '*'  *******
-
 
     ptr = strchr(infix, '*');
     while (ptr) {
@@ -470,9 +466,7 @@ static unsigned int expresstoi() {
     }
     postfix[j] = '\0';
 
-
 // convert postfix to int ***************
-
 
     tos = 0;
     ptr = postfix;
@@ -540,25 +534,20 @@ static void sectyp(char line_type) {
     if (!labflg && (line_type == ';') && strchr("!&'", section_type))
         line_type = section_type;
 
-
     if ((line_type != section_type) || labflg)  // if new sec type or a label
     {
         section_type = line_type;
         if (labflg)             //if there is a label....
         {
-            if (pass == 1)
-                /**/ {
+            if (pass == 1) {
                 if (line_type == ';')   //with normal code (;)..
                     sss[symnum - 1].symtyp = 0; // label is enough, so no entry
                 else
                     sss[symnum - 1].symtyp = line_type; // else make entry
-                }
-            if ((pass == 2) && (line_type == '&'))
-                /**/ {
+            }
+            if ((pass == 2) && (line_type == '&')) {
                 sss[symnum - 1].symtyp = line_type;
-                }
-
-
+            }
         } else /* no label */ if ((pass == 2) && (pc > 0xff)) {
             if (symnumext >= MAXSYMS)
                 error("Too many symbols");
@@ -567,7 +556,6 @@ static void sectyp(char line_type) {
         }
     }
 }
-
 
 // ----------------------------------------------------------------------------
 
