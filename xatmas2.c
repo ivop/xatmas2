@@ -192,14 +192,8 @@ static void error(char *errstr) {
 // ----------------------------------------------------------------------------
 
 static int prec(char symbol) {
-    if (symbol == '(')
-        return 0;
-    if (symbol == ')')
-        return 0;
-    if (symbol == '+' || symbol == '-')
-        return 1;
-    if (symbol == '*' || symbol == '/')
-        return 2;
+    if (symbol == '+' || symbol == '-') return 1;
+    if (symbol == '*' || symbol == '/') return 2;
     return 0;
 }
 
