@@ -41,10 +41,10 @@ enum { OPC, NN, AA, AAAA, AAX, AAAAX, AAY, AAAAY, BAAXB, BAABY, BRA, BAAAAB,
 };
 enum { UNUSED, SYMBOL, MACRO, MACRO_UNUSED, MACRO_LAB };
 
-char opcdat[] =
+static const char opcdat[] =
     "BITSTYLDYCPYCPXORAANDEORADCSTALDACMPSBCASLROLLSRRORSTXLDXDECINC";
 
-unsigned short data[21][15] = {
+static const unsigned short data[21][15] = {
     /* BIT */
     {0, 0, 0x24, 0x2C, 0, 0, 0, 0, 0, 0xD6, 0x67, 0x46, 0x48, 0x4A},
     /* STY */
@@ -140,8 +140,6 @@ char src_filename[300];
 
 ssstype sss[MAXSYMS];
 
-int ssscmpadr(const ssstype * dummy1, const ssstype * dummy2);
-
 FILE *stream;
 FILE *stream2;
 FILE *stream3;
@@ -170,7 +168,7 @@ static const int intab[] = { 0x40, 0, 0x20, 0x60, 0xA0, 0xC0, 0x80, 0xE0 };
 
 // ----------------------------------------------------------------------------
 
-void error(char *errstr) {
+static void error(char *errstr) {
     int len;
     char partstr[100];
 
@@ -193,7 +191,7 @@ void error(char *errstr) {
 
 // ----------------------------------------------------------------------------
 
-int prec(char symbol) {
+static int prec(char symbol) {
     if (symbol == '(')
         return 0;
     if (symbol == ')')
@@ -207,7 +205,7 @@ int prec(char symbol) {
 
 // ----------------------------------------------------------------------------
 
-unsigned int symtoi3(char *strbeg) {
+static unsigned int symtoi3(char *strbeg) {
     int i, j;
 
     if (symnum == 0)
@@ -232,7 +230,8 @@ unsigned int symtoi3(char *strbeg) {
  * When done txtptr is the address directly after the location of symbol.
  * If evaluation is not possible,the value returned is NOTFOUND
  */
-unsigned int symtoi1() {
+
+static unsigned int symtoi1() {
     char strbeg[40];
     char *ptr;
     char ch;
@@ -242,8 +241,6 @@ unsigned int symtoi1() {
     ptr = strbeg;
     ch = *txtptr;
     symfg = 0;
-
-
 
     if (ch == '*') {            /* *:program counter) */
         txtptr++;
@@ -539,7 +536,7 @@ static unsigned int expresstoi() {
 
 // ----------------------------------------------------------------------------
 
-unsigned int expresstoi_p2() {
+static unsigned int expresstoi_p2() {
     unsigned int val;
 
     find_symad_flg = 0;
@@ -589,7 +586,7 @@ char fptsmb(int i) {
 
 // ----------------------------------------------------------------------------
 
-void sectyp(char line_type) {
+static void sectyp(char line_type) {
     if (!labflg && (line_type == ';') && strchr("!&'", section_type))
         line_type = section_type;
 
@@ -624,13 +621,13 @@ void sectyp(char line_type) {
 
 // ----------------------------------------------------------------------------
 
-int ssscmpadr(const ssstype * a1, const ssstype * a2) {
+static int ssscmpadr(const ssstype * a1, const ssstype * a2) {
     return (a1->symadr - a2->symadr);
 }
 
 // ----------------------------------------------------------------------------
 
-void list_label(int i) {
+static void list_label(int i) {
     printf("%s\t", sss[i].symbol);
     if (sss[i].macf == MACRO)
         printf("MACRO\n");
@@ -640,7 +637,7 @@ void list_label(int i) {
 
 // ----------------------------------------------------------------------------
 
-void list_label_f(int i) {
+static void list_label_f(int i) {
     fprintf(stream2, "%s\t", sss[i].symbol);
     if (sss[i].macf == MACRO)
         fprintf(stream2, "MACRO\n");
@@ -650,8 +647,7 @@ void list_label_f(int i) {
 
 // ----------------------------------------------------------------------------
 
-void operand_to_filename(char filename[]) {
-
+static void operand_to_filename(char filename[]) {
     int cnt = 0;
     char *linptr;
 
@@ -687,7 +683,7 @@ void operand_to_filename(char filename[]) {
 
 // ----------------------------------------------------------------------------
 
-void find_operand(void) {
+static void find_operand(void) {
     int cnt = 0;
     char *linptr;
 
@@ -711,7 +707,7 @@ void find_operand(void) {
 
 // ----------------------------------------------------------------------------
 
-void toxlbuf(char ch) {
+static void toxlbuf(char ch) {
     char tempstr[10];
 
     if (!orgflg)
@@ -746,7 +742,7 @@ void toxlbuf(char ch) {
 /********* chkopc    returns the position (0, 1, 2,.. ) of opc in string
 						returns -1 if not found */
 
-int chkopc(const char opcstring[]) {
+static int chkopc(const char opcstring[]) {
     int cnt = 0;
     const char *ptr;
 
