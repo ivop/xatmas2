@@ -547,45 +547,6 @@ static unsigned int expresstoi_p2() {
 
 // ----------------------------------------------------------------------------
 
-char fptsmb(int i) {
-    char *lnbfptr;
-    int cnt;
-    char len;
-
-    if ((sss[i].symadr == sss[i - 1].symadr) && (i > 0)) {      /* double entry */
-        if (sss[i - 1].symbol[0])
-            strcpy(sss[i].symbol, sss[i - 1].symbol);
-        if (sss[i - 1].symtyp)
-            sss[i].symtyp = sss[i - 1].symtyp;
-        secsiz -= lensv;
-        fsetpos(stream, &pos2);
-    }
-    lnbfptr = linbuf[0];
-    cnt = 0;
-    if (sss[i].macf == MACRO)
-        return (0);
-    while (sss[i].symbol[cnt])
-        *lnbfptr++ = sss[i].symbol[cnt++];
-    if (sss[i].symtyp) {
-        *lnbfptr = sss[i].symtyp;
-        cnt++;
-    }
-    len = cnt + 4;
-    fgetpos(stream, &pos2);
-    fputc((char)sss[i].symadr, stream);
-    fputc((char)((sss[i].symadr) >> 8), stream);
-    fputc(sss[i].ofst, stream);
-    fputc(len, stream);
-    lnbfptr = linbuf[0];
-    while (cnt) {
-        fputc(*lnbfptr++, stream);
-        cnt--;
-    }
-    return (len);
-}
-
-// ----------------------------------------------------------------------------
-
 static void sectyp(char line_type) {
     if (!labflg && (line_type == ';') && strchr("!&'", section_type))
         line_type = section_type;
