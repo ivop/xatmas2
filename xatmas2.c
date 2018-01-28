@@ -719,7 +719,7 @@ int main(int argc, char *argv[]) {
     int temp;
 
     char *operptr, macdumtab[MAXDUMS][10], dumbuf[80];
-    int dumnum, macroflg;
+    int dumnum = 0, macroflg;
 
     char macsymbol[MAXMACSYMS][10];
     char *macptrtab[MAXMACSYMS];
@@ -749,7 +749,7 @@ int main(int argc, char *argv[]) {
     short lo_fg;
     short objfile_flag = 0;
     short rmbflg = 0;
-    int rmbadr;
+    int rmbadr = 0;
     char *txtbuf;
 
     txtbuf = (char *)malloc(MAX_TXT_SIZ); /* malloc   begin of buffer file is loaded into */
