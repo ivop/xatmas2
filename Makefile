@@ -1,7 +1,7 @@
 
 CC ?= gcc
 DEBUG = -g3
-WARN = -W -Wall
+WARN = -W -Wall -Wextra
 CFLAGS ?= -std=c99 -O3
 
 all:	xatmas2
