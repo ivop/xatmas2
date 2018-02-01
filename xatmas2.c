@@ -744,7 +744,6 @@ int main(int argc, char *argv[]) {
     char include_filename[300];
     char loafilename[300];
     char lstfilename[300];
-    char filnmtmp[300];
 
     short lo_fg;
     short objfile_flag = 0;
@@ -1319,7 +1318,7 @@ int main(int argc, char *argv[]) {
                     if (*outflgs && !lstflg) {
                         lstflg++;
                         if ((stream2 = fopen(lstfilename, "w")) == 0) {
-                            printf("Can't open %s\n", filnmtmp);
+                            printf("Can't open %s\n", lstfilename);
                             error("Can't open LST file");
                         }
                     }
