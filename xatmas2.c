@@ -329,8 +329,9 @@ static unsigned int symtoi1() {
             if (*txtptr == '+') {
                 if ((*(txtptr + 1) - '0') > sssptr->ofst)
                     sssptr->ofst = *(txtptr + 1) - '0';
-                if (*(txtptr + 2) == '+')       //These two lines take care
-                    sssptr->ofst = sssptr->ofst + *(txtptr + 3) - '0';  //of hidden labels 
+               //The next two lines take care of hidden labels 
+                if (*(txtptr + 2) == '+')
+                    sssptr->ofst = sssptr->ofst + *(txtptr + 3) - '0';
             }
             if (*txtptr == '-')
                 sssptr->ofst = (char)(256 - (*(txtptr + 1) - '0'));
@@ -425,17 +426,17 @@ static unsigned int expresstoi() {
 
     length = strlen(infix);
     for (i = 0; i < length; i++) {
-        if (!strchr("+-*/()", infix[i]))        //Numbers are added to the postfix string
+        if (!strchr("+-*/()", infix[i])) //Numbers are added to postfix string
             postfix[j++] = infix[i];
 
-        else                    //If an operator or a bracket is encountered...
+        else               //If an operator or a bracket is encountered...
         {
-            if (tos == 0)       //If the stack is empty, the operator is added to it
+            if (tos == 0) //If the stack is empty, the operator is added to it
 
                 stack[tos++] = infix[i];
 
             else                //stack not empty
-            {                   //Operators are pushed or popped based on the order of precedence
+            { //Operators are pushed or popped based on the order of precedence
                 if (infix[i] != ')' && infix[i] != '(') {
                     if (prec(infix[i]) <= prec(stack[tos - 1]))
                         postfix[j++] = stack[--tos];
@@ -751,7 +752,7 @@ int main(int argc, char *argv[]) {
     int rmbadr = 0;
     char *txtbuf;
 
-    txtbuf = (char *)malloc(MAX_TXT_SIZ); /* malloc   begin of buffer file is loaded into */
+    txtbuf = (char *)malloc(MAX_TXT_SIZ);
     if (txtbuf == NULL) {
         printf("Can't allocate memory for text buffer.\a\n");
         exit(1);
@@ -773,7 +774,8 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
 
-    txtsiz = fread(txtbuf, 1, MAX_TXT_SIZ, stream);     // read SRC file into buffer
+    // read SRC file into buffer
+    txtsiz = fread(txtbuf, 1, MAX_TXT_SIZ, stream);
     fclose(stream);
 
     if (txtsiz == MAX_TXT_SIZ) {
@@ -839,7 +841,6 @@ int main(int argc, char *argv[]) {
             sss[symnum++].symadr = 0xd40f;
         }
 
-
         for (linnum = 0; !((*txtptr == 0) && (include_flg == 0));
              txtptr = linbegptr + linlen) {
             if ((*txtptr == 0) && (include_flg)) {
@@ -866,7 +867,6 @@ int main(int argc, char *argv[]) {
                             fprintf(stream2, "%s\n", prnlnbuf2[i - 1]);
                         }
                     }
-                    //fprintf (stream2,"%s\n",linbuf[maclevel]); ////
                     *prnlnbuf = '\0';
                     *prnlnbufbeg = '\0';
                     *prnlnbuf2[0] = '\0';
@@ -885,9 +885,9 @@ int main(int argc, char *argv[]) {
             *operand = '\0';
             linbegptr = linptr = txtptr;        //set line begin to txtptr
             lnbfptr = linbuf[maclevel];
-            linlen = (short)(strchr(linbegptr, '\n') + 1L - linbegptr); //find linlen
+            linlen = (short)(strchr(linbegptr, '\n') + 1L - linbegptr);
 
-            if (!maclevel && pass == 1) {       /*Test line for illegal characters */
+            if (!maclevel && pass == 1) { /*Test line for illegal characters */
                 for (cnt = 1; cnt <= linlen; cnt++) {
                     if (*linptr < 0) {
                         linbegptr[linlen] = 0;
@@ -902,19 +902,19 @@ int main(int argc, char *argv[]) {
 
             while (*linptr != '\n') {
                 /* Determine and place local label in macro */
-
                 *lnbfptr = 0;
                 if ((*linptr == '@') && maclevel) {
                     ptr = linptr - 1;
                     cnt = 0;
-                    while (isalnum(*ptr)) {     /* find beginning of local label */
+                    while (isalnum(*ptr)) { /* find beginning of local label */
                         ptr--;
                         cnt++;
                     }
-                    if (strchr(", \n+-", *ptr)) {       /*Characters which can precede a local label!!!!!!! */
+                    if (strchr(", \n+-", *ptr)) { /*Characters which can 
+                                                    precede a local label! */
                         if (cnt > 4)
-                            error
-                                ("Local labels cannot be longer than 5 characters");
+                            error("Local labels cannot be longer than "
+                                  "5 characters");
                         ptr++;
                         labptr = lab;
                         while (cnt) {
@@ -927,7 +927,7 @@ int main(int argc, char *argv[]) {
                              loclabtbpos++)
                             if (strcmp(loclabtb[loclabtbpos], lab) == 0)
                                 break;  /*local label found */
-                        if (loclabtbpos == loclabnum) { /* label into loclabtb */
+                        if (loclabtbpos == loclabnum) { // label into loclabtb
                             strcpy(loclabtb[loclabnum], lab);
                             labexttab[loclabnum++] = 0;
                         }
@@ -942,16 +942,16 @@ int main(int argc, char *argv[]) {
                             labexttab[loclabtbpos]++;
                             lclbnum[maclevel]++;
                         }
-                        sprintf(lnbfptr, "%04d", labexttab[loclabtbpos]);       /* Add four digits to label */
+                        /* Add four digits to label */
+                        sprintf(lnbfptr, "%04d", labexttab[loclabtbpos]);
                         lnbfptr += 4;
                         linptr++;
                     }
                 }
 
-                                                        /********** Dummy in macro ***********/
+                /********** Dummy in macro ***********/
 
-
-                if ((*linptr & 128) && !macroflg) {     /* inverted characters */
+                if ((*linptr & 128) && !macroflg) { /* inverted characters */
                     ptr = macargsptr[maclevel];
 
                     cnt = *linptr & 127;
@@ -975,8 +975,7 @@ int main(int argc, char *argv[]) {
                             *lnbfptr++ = *ptr++;
                     while (*linptr & 128)
                         linptr++;
-                } else /*           *linptr < 128           */ if (*linptr !=
-                                                                   '\n')
+                } else /* *linptr < 128 */ if (*linptr != '\n')
                     *lnbfptr++ = *linptr++;
             }
 
@@ -987,17 +986,15 @@ int main(int argc, char *argv[]) {
             *lnbfptr++ = '\n';
             *lnbfptr = '\0';
 
-
 /**********  Test first character of line ***********/
 
             switch (*txtptr) {
             case '\?':
-                ptr = ptr;      /*dummy statement for 'run to cursor' at this line */
-            case '\n':         /* empty line   */
+            case '\n':          /* empty line   */
             case ';':
             case '*':
                 continue;       /* comment              */
-            case ' ':          /* white space  */
+            case ' ':           /* white space  */
             case '\t':
                 break;
             case '#':
@@ -1032,25 +1029,24 @@ int main(int argc, char *argv[]) {
                 if (*txtptr == '@')
                     label[pos++] = *txtptr++;
                 if (!isspace(*txtptr))
-                    error
-                        ("Label must consist only of alphabetic and numeric characters");
+                    error("Label must consist only of alphabetic and numeric "
+                         "characters");
                 label[pos] = 0;
 
                 sprintf(labelstr, " %s ", label);
                 if (strstr(opcds, labelstr))
-                    error
-                        ("You can't have an opcode at the beginning of a line");
+                    error ("You can't have an opcode at the beginning "
+                           "of a line");
                 if (strstr(assdirecs, labelstr))
-                    error
-                        ("You can't have an assembler directive the beginning of a line");
+                    error ("You can't have an assembler directive the "
+                           "beginning of a line");
                 if (strstr(assdirecssolo, labelstr))
-                    error
-                        ("You can't have an assembler directive the beginning of a line");
+                    error("You can't have an assembler directive the "
+                          "beginning of a line");
             }
             }
 
             /*      ********* find opcode *************************** */
-
             while ((*txtptr == ' ') || (*txtptr == '\t'))
                 txtptr++;
             tpsav = txtptr;
@@ -1077,11 +1073,10 @@ int main(int argc, char *argv[]) {
 
             *ptr = 0;           //opcode finalised
 
-
-
-
-            if (!(*txtptr == ' ') || *(txtptr + 1) == ' ' || *(txtptr + 1) == '\n' || *(txtptr + 1) == '\t')    //Check operand for dirictives
-            {
+            if (!(*txtptr == ' ') || *(txtptr + 1) == ' '
+                                  || *(txtptr + 1) == '\n'
+                                  || *(txtptr + 1) == '\t') {
+                //Check operand for dirictives
                 sprintf(opcstr, " %s ", opcode);
                 if (strstr(assdirecs, opcstr))
                     error
@@ -1091,14 +1086,15 @@ int main(int argc, char *argv[]) {
             *prnlnbuf = 0;
             *prnlnbufbeg = 0;
             if ((pass == 2) && *outflgs) {
-                if (strcmp(opcode, "MACRO") && strcmp(opcode, "MEND") && !macroflg) {   /* Not in macro */
+                if (strcmp(opcode, "MACRO") && strcmp(opcode, "MEND")
+                                        && !macroflg) {   /* Not in macro */
                     if ((maclevel == 0) || !(strchr(outflgs, 'M') || strchr(outflgs, 'm')))     //M = macros not expanded
                     {
 
                         if (!(strstr("EQU EPZ ORG", opcode)
                               && (strlen(opcode) == 3))) {
                             if (pc != pc_sav)
-                                sprintf(prnlnbufbeg, "%4X: ", pc);      /* PC ADDRESS */
+                                sprintf(prnlnbufbeg, "%4X: ", pc); // PC ADDR
                             else
                                 sprintf(prnlnbufbeg, "    : ");
                             pc_sav = pc;
@@ -1112,13 +1108,14 @@ int main(int argc, char *argv[]) {
                         } else {
                             for (i = 0; i < maclevel; i++)
                                 strcat(prnlnbuf, "| "); /* INDENT */
-                            strcat(prnlnbuf, linbuf[maclevel]); /*add instruction line */
+                            /*add instruction line */
+                            strcat(prnlnbuf, linbuf[maclevel]);
                         }
                     }
                 }
             }
 
-/* LABEL AT LINE BEGIN  LABEL AT LINE BEGIN LABEL AT LINE BEGIN LABEL AT LINE BEGIN*/
+/* LABEL AT LINE BEGIN */
 
             if (*label) {
                 if (pass == 1) {
@@ -1129,7 +1126,6 @@ int main(int argc, char *argv[]) {
                 }
 
 /* EPZ EQU  LABEL AT LINE BEGIN*/
-
                 if ((strcmp(opcode, "EQU") == 0)
                     || (strcmp(opcode, "EPZ") == 0)) {
                     txtptr++;
@@ -1144,10 +1140,7 @@ int main(int argc, char *argv[]) {
                     continue;
                 }
 
-
-
-                /* RMB  LABEL AT LINE BEGIN *///(Init ving memory bytes)
-
+/* RMB  LABEL AT LINE BEGIN */ //(Init ving(?) memory bytes)
                 if (strcmp(opcode, "RMB") == 0) {
                     if (!rmbflg)
                         error("INITRMB value must precede this line");
@@ -1164,7 +1157,6 @@ int main(int argc, char *argv[]) {
                 }
 
 /* MACRO  LABEL AT LINE BEGIN*/
-
                 if (strcmp(opcode, "MACRO") == 0)       // MovAl   MACRO A,N
                 {
                     if (macroflg)
@@ -1176,22 +1168,21 @@ int main(int argc, char *argv[]) {
                         dumnum = 0;
                         do {
                             pos = 0;
-                            while ((*operptr != ',') && (*operptr != 0))        // macdumtab[0]="A"
-                                macdumtab[dumnum][pos++] = *operptr++;  // macdumtab[1]="B"
+                            while ((*operptr != ',') && (*operptr != 0))
+                                macdumtab[dumnum][pos++] = *operptr++;
                             macdumtab[dumnum][pos] = 0;
                             dumnum++;
                         } while (*operptr++);
 
-                        strcpy(macsymbol[macnum], label);       // macsymbol[macnum]    MovAl
+                        strcpy(macsymbol[macnum], label);
                         if (*(txtptr - 1) == '\n')
                             txtptr--;
-                        macptrtab[macnum++] = strchr(txtptr, '\n') + 1; // macptrtab[macnum++]     pointer
+                        macptrtab[macnum++] = strchr(txtptr, '\n') + 1;
                     }
                     continue;
                 }
 
 /*  LABEL AT LINE BEGIN IN CODE */
-
                 else {
                     labflg = 1;
                     if (strcmp(label, "DO") == 0)
@@ -1215,8 +1206,7 @@ int main(int argc, char *argv[]) {
                 }
             }
 
-
-            /*END LABEL AT LINE BEGIN LABEL AT LINE BEGIN LABEL AT LINE BEGIN LABEL AT LINE BEGIN */
+            /*END LABEL AT LINE BEGIN */
             /* MEND */
             if (strcmp(opcode, "MEND") == 0) {
                 if (macroflg)
@@ -1232,7 +1222,6 @@ int main(int argc, char *argv[]) {
             }
 
 /* MACROFLG */
-
             if (macroflg) {
                 if (pass == 1) {
                     find_operand();
@@ -1248,7 +1237,7 @@ int main(int argc, char *argv[]) {
 
                             pos = 0;
                             while (isalnum(*operptr)) {
-                                dumbuf[pos++] = *operptr++;     // dubuf == operand
+                                dumbuf[pos++] = *operptr++; // dubuf == operand
                                 txtptr++;
                             }
                             dumbuf[pos] = 0;
@@ -1266,7 +1255,6 @@ int main(int argc, char *argv[]) {
             }
 
 /* INCLUDE */
-
             if (strcmp(opcode, "INCLUDE") == 0) {
                 if (include_flg)
                     error("Can't have 'INCLUDE' in an included file.");
@@ -1303,7 +1291,6 @@ int main(int argc, char *argv[]) {
             }
 
 /* NOHEADER */
-
             if ((strcmp(opcode, "NOHEADER") == 0)) {
                 objfile_flag = 1;
                 continue;
@@ -1326,8 +1313,7 @@ int main(int argc, char *argv[]) {
                 continue;
             }
 
-            /* INITRMB *///(Init reserving memory bytes)
-
+/* INITRMB */
             if (strcmp(opcode, "INITRMB") == 0) {
                 txtptr++;
                 rmbadr = expresstoi_p2();
@@ -1336,7 +1322,6 @@ int main(int argc, char *argv[]) {
             }
 
 /* ORG */
-
             if (strcmp(opcode, "ORG") == 0) {
                 txtptr++;
                 {
@@ -1368,10 +1353,7 @@ int main(int argc, char *argv[]) {
                 continue;
             }
 
-
-
 /* DFB */
-
             if (strcmp(opcode, "DFB") == 0) {
                 data_flg = 1;
                 if (*(txtptr + 1) == '%')
@@ -1386,7 +1368,6 @@ int main(int argc, char *argv[]) {
             }
 
 /* DFW */
-
             if (strcmp(opcode, "DFW") == 0) {
                 data_flg = 1;
                 sectyp('=');
@@ -1400,7 +1381,6 @@ int main(int argc, char *argv[]) {
             }
 
 /* FILLMEM */
-
             if (strcmp(opcode, "FILLMEM") == 0) {
                 data_flg = 1;
                 if (*(txtptr + 1) == '\'')
@@ -1419,7 +1399,6 @@ int main(int argc, char *argv[]) {
             }
 
 /* ASC */
-
             if (strcmp(opcode, "ASC") == 0) {
                 data_flg = 1;
                 do {
@@ -1434,7 +1413,6 @@ int main(int argc, char *argv[]) {
                             toxlbuf(ch);
                         }
                         break;
-
                     case '$':  /* screen code, end inverse  */
                         sectyp('$');
                         while ((*txtptr != '$') && (*txtptr != '\n')) {
@@ -1459,7 +1437,8 @@ int main(int argc, char *argv[]) {
                         }
                         toxlbuf((char)(128 | ch));
                         break;
-                    default:   /* normal ASC: kann use any other non alnum character */
+                    default:   /* normal ASC: can use any other non alnum
+                                  character */
                         sectyp('"');
                         if (!isalnum(*(txtptr - 1))) {
                             ch = *(txtptr - 1);
@@ -1473,13 +1452,9 @@ int main(int argc, char *argv[]) {
             }
 
 /* Find operand */
-
-
             find_operand();
 
-
 /* OPCODE IS A MACRO */
-
             for (i = 0; i < macnum; i++)
                 if (strcmp(macsymbol[i], opcode) == 0)
                     break;
@@ -1494,7 +1469,6 @@ int main(int argc, char *argv[]) {
             }
 
 /* OPC without operand */
-
             cnt = 0;
             if (!(*operand)) {
                 if ((cnt = chkopc(opcdat1)) >= 0) {     /* rts, sec, plp, ...... */
@@ -1514,7 +1488,6 @@ int main(int argc, char *argv[]) {
 
 
 /* JMP */
-
             if (strcmp(opcode, "JMP") == 0) {
                 sectyp(';');
                 if (*operand == '(') {
@@ -1533,16 +1506,14 @@ int main(int argc, char *argv[]) {
             }
 
 /* BRA */
-
             if ((cnt = chkopc(brastrdat)) >= 0) {
                 sectyp(';');
                 toxlbuf((char)bradat[cnt]);
                 braoffset = temp = expresstoi_p2() - (pc + 1);
                 if (pass == 2) {
                     if (temp < -128 || temp > 127) {
-                        printf
-                            ("\nAttempted to branch a distance of %i. (Range -128 to 127 is permitted.)",
-                             temp);
+                        printf("\nAttempted to branch a distance of %i. "
+                               "(Range -128 to 127 is permitted.)", temp);
                         error("Branch out of range");
                     }
                 }
@@ -1551,15 +1522,15 @@ int main(int argc, char *argv[]) {
             }
 
 /* Subroutine */
-
             if (strcmp(opcode, "JSR") != 0) {
-                if ((cnt = chkopc(opcdat)) < 0) {       /* opcode not found, must be subroutine */
+                if ((cnt = chkopc(opcdat)) < 0) {
+                    /* opcode not found, must be subroutine */
                     if ((strcmp(opcode, "MACRO") == 0) ||
                         (strcmp(opcode, "EPZ") == 0) ||
                         (strcmp(opcode, "EQU") == 0))
-                        error("Label missing at beginning of line");    // since otherwise these would have been taken care of
-//                              strcpy(operand,opcode);
-//                              strcpy(opcode,"JSR");
+                        error("Label missing at beginning of line");
+                        // since otherwise these would have been taken care of
+
                     error("A subroutine can't have an operand");
                 }
 
@@ -1567,7 +1538,6 @@ int main(int argc, char *argv[]) {
 
 
 /* JSR */
-
             if (!strcmp(opcode, "JSR")) {
                 if (strchr(";'!(", section_type) == 0)
                     sectyp(';');        //version 1.01
@@ -1579,12 +1549,11 @@ int main(int argc, char *argv[]) {
             }
 
 /* opc 'c */
-
             if (operand[0] == '\'') {
                 sectyp('\'');
                 if (data[cnt][NN] == 0)
-                    error
-                        ("direct addressing (') cannot be used with this opcode");
+                    error("direct addressing (') cannot be used with "
+                          "this opcode");
                 txtptr++;
                 ch = *txtptr++;
                 if (*txtptr == '\'')
@@ -1596,12 +1565,10 @@ int main(int argc, char *argv[]) {
             }
 
 /* opc #nn */
-
-
             if (operand[0] == '#') {
                 if (data[cnt][NN] == 0)
-                    error
-                        ("direct addressing (#) cannot be used with this opcode");
+                    error("direct addressing (#) cannot be used with "
+                          "this opcode");
 
                 txtptr++;
                 intval = expresstoi_p2();
@@ -1639,9 +1606,8 @@ int main(int argc, char *argv[]) {
 
             symval = expresstoi();
 
-            if ((symval < 256) && (double_byte_flg == 0))       // txtptr -> first byte after expression
-            {
-
+            if ((symval < 256) && (double_byte_flg == 0)) {
+                // txtptr -> first byte after expression
                 if ((*(txtptr - 1) == ')') && (*operand == '('))
                     txtptr--;   //needed for expresstoi(new)
 
@@ -1692,14 +1658,14 @@ int main(int argc, char *argv[]) {
                         case 'y':
                             if ((*(opcode + 2) == 'Y')
                                 || (*(opcode + 2) == 'X'))
-                                error
-                                    ("Can't use indirect addressing with this opcode");
+                                error("Can't use indirect addressing with "
+                                      "this opcode");
 
                             operno = BAABY;
                             break;      // OPA (AA),Y
                         default:
-                            error
-                                ("Must have Y after comma for indirect addressing");
+                            error("Must have Y after comma for indirect "
+                                  "addressing");
                             break;
                         }
                         break;
@@ -1714,15 +1680,11 @@ int main(int argc, char *argv[]) {
                     break;
                 }
 
-            }
-
-
-            else {              /* symval >= 256 */
+            } else {              /* symval >= 256 */
 
                 if (*operand == '(')
-                    error
-                        ("Zero page address expected -- Operand not defined -- Label may be unknown");
-
+                    error("Zero page address expected -- Operand not "
+                          "defined -- Label may be unknown");
 
                 switch (*txtptr) {
                 case ' ':
@@ -1756,16 +1718,14 @@ int main(int argc, char *argv[]) {
                 }
             }
 
-
-
             if (operno == ERROR)
                 error("Illegal addressing");
             if (pass == 2)
                 if (*xlbfptr != (char)data[cnt][operno]) {
                     printf("\n\nOpcode mismatch %X <> %X", 0xff & (*xlbfptr),
                            0xff & data[cnt][operno]);
-                    error
-                        ("This zero-page label must be defined before present line.");
+                    error("This zero-page label must be defined "
+                           "before present line.");
                 }
             if (data[cnt][operno] == 0)
                 error("This addressing is not possible with this opcode");
@@ -1780,7 +1740,7 @@ int main(int argc, char *argv[]) {
                 toxlbuf((char)(symval >> 8));
                 break;
             }
-        }                       // end toxlbuf  end toxlbuf end toxlbuf end toxlbuf end toxlbuf end toxlbuf end toxlbuf end toxlbuf
+        }                       // end toxlbuf
         printf("to %4X\n", pc - 1);
 
         if (pass == 1) {
@@ -1818,7 +1778,7 @@ int main(int argc, char *argv[]) {
 
     qsort(sss, symnumext, sizeof(ssstype), (int (*)(const void *, const void *)) ssscmpadr);
 
-/* Symbol table */
+    /* Symbol table */
     if (strchr(outflgs, 'N') || strchr(outflgs, 'n')) {
         fprintf(stream2, "\n\n**** Symbol table *****\n\n");
         for (i = 0; i < symnumext; i++) {
@@ -1838,8 +1798,10 @@ int main(int argc, char *argv[]) {
         if (((sss[i].macf == UNUSED) || (sss[i].macf == MACRO_UNUSED))
             && sss[i].symbol[0])
             printf("Unused symbol: %s\n", sss[i].symbol);
-        if ((sss[i].symadr == sss[symnum - 1].symadr) && (symnum > 0)) {        /* double entry */
-            if (sss[symnum - 1].symbol[0] && sss[i].symbol[0]) {        /* 2 labels */
+        if ((sss[i].symadr == sss[symnum - 1].symadr) && (symnum > 0)) {
+            /* double entry */
+            if (sss[symnum - 1].symbol[0] && sss[i].symbol[0]) {
+                /* 2 labels */
                 if ((sss[symnum - 1].macf == MACRO_LAB)
                     || (sss[i].macf == MACRO_LAB)) {
                     if (sss[symnum - 1].macf == MACRO_LAB)
@@ -1876,5 +1838,3 @@ int main(int argc, char *argv[]) {
     printf("%d bytes\n", txtsiz);
     fclose(stream);
 }
-
-
