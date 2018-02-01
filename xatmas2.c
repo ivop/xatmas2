@@ -742,7 +742,7 @@ int main(int argc, char *argv[]) {
     short twiceflg = 0;
 
     char include_filename[300];
-    char loafilename[300];
+    char xexfilename[300];
     char lstfilename[300];
 
     short lo_fg;
@@ -786,7 +786,7 @@ int main(int argc, char *argv[]) {
     strcpy(lstfilename, src_filename);
     strcpy(strchr(lstfilename, '.'), ".LIS");
 
-    strcpy(loafilename, "AUTORUN.SYS");
+    strcpy(xexfilename, "AUTORUN.SYS");
 
 /********************** Now work on buffer *********************/
 
@@ -1861,16 +1861,16 @@ int main(int argc, char *argv[]) {
 
     fclose(stream);
 
-/* LOA LOA LOA LOA LOA LOA LOA LOA LOA LOA LOA LOA LOA LOA LOA LOA LOA LOA LOA LOA LOA */
-    if ((stream = fopen(loafilename, "wb")) == NULL) {
-        fprintf(stderr, "Can't open %s\n", loafilename);
+    // Write .xex file
+    if ((stream = fopen(xexfilename, "wb")) == NULL) {
+        fprintf(stderr, "Can't open %s\n", xexfilename);
         exit(1);
     }
 
-    printf("\nSaving binary file %s\n", loafilename);
+    printf("\nSaving binary file %s\n", xexfilename);
     txtsiz = fwrite(xlbuf, 1, xlbfptr - xlbuf, stream);
     if (txtsiz != xlbfptr - xlbuf) {
-        fprintf(stderr, "Can't save %s\n", loafilename);
+        fprintf(stderr, "Can't save %s\n", xexfilename);
         exit(1);
     }
     printf("%d bytes\n", txtsiz);
