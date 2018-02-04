@@ -736,7 +736,6 @@ int main(int argc, char *argv[]) {
     char *labptr;
 
     char prnlnbuf[120];
-    short twiceflg = 0;
 
     char include_filename[300];
     char xexfilename[300];
@@ -1761,14 +1760,11 @@ int main(int argc, char *argv[]) {
                     fprintf(stderr, "\nSame label twice -\n");
                     list_label(i - 1);
                     list_label(i);
-                    twiceflg = 1;
+                    exit(1);
                 }
             }
         }
 
-        if (twiceflg) {
-            exit(1);
-        }
         *sgndtbptr1 = pc - 1;
 
     } // END PASSES END PASSES END PASSES
