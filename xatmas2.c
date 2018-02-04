@@ -175,19 +175,18 @@ static void error(char *errstr) {
     int len;
     char partstr[100];
 
-    printf("\n\nERROR --\n%s\nat ", errstr);
-    if (pc)
-        printf("address $%X, ", pc);
-    printf("line %d\n\n\a", linnum);
-    printf("%s", linbuf[0]);
+    fprintf(stderr, "\n\nERROR --\n%s\nat ", errstr);
+    if (pc) fprintf(stderr, "address $%X, ", pc);
+    fprintf(stderr, "line %d\n\n\a", linnum);
+    fprintf(stderr, "%s", linbuf[0]);
 
     if (maclevel == 0) {
         len = txtptr - linbegptr;
         strcpy(partstr, linbuf[0]);
         partstr[len] = '\0';
-        printf("%s", partstr);
+        fprintf(stderr, "%s", partstr);
     } else {
-        printf("Error in macro:\n%s", linbuf[maclevel]);
+        fprintf(stderr, "Error in macro:\n%s", linbuf[maclevel]);
     }
     exit(linnum);
 }
@@ -492,10 +491,9 @@ static unsigned int expresstoi() {
                 intstack[tos++] = a / b;
                 break;
             default:
-                if (*ptr == '(')
-                    error("Missing closing parenthisis");
-                printf("infix: %s   -Character '%c' in %s  operand is %s",
-                       infix, *ptr, postfix, operand);
+                if (*ptr == '(') error("Missing closing parenthisis");
+                fprintf(stderr, "infix: %s   -Character '%c' in %s operand "
+                        "is %s", infix, *ptr, postfix, operand);
                 error("Illegal character in postfix expression");
                 break;
             }
@@ -508,8 +506,8 @@ static unsigned int expresstoi() {
     result = intstack[--tos];
 
     if (tos) {
-        printf("\n\noperand: %s   infix: %s   postfix: %s", operand, infix,
-               postfix);
+        fprintf(stderr, "\n\noperand: %s   infix: %s   postfix: %s", operand,
+                                                        infix, postfix);
         error("Illegal syntax. Can't resolve expression");
     }
 
@@ -567,11 +565,9 @@ static int ssscmpadr(const ssstype * a1, const ssstype * a2) {
 // ----------------------------------------------------------------------------
 
 static void list_label(int i) {
-    printf("%s\t", sss[i].symbol);
-    if (sss[i].macf == MACRO)
-        printf("MACRO\n");
-    else
-        printf(" = %X\n", sss[i].symadr);
+    fprintf(stderr, "%s\t", sss[i].symbol);
+    if (sss[i].macf == MACRO) fprintf(stderr, "MACRO\n");
+    else                      fprintf(stderr, " = %X\n", sss[i].symadr);
 }
 
 // ----------------------------------------------------------------------------
@@ -754,13 +750,13 @@ int main(int argc, char *argv[]) {
 
     txtbuf = (char *)malloc(MAX_TXT_SIZ);
     if (txtbuf == NULL) {
-        printf("Can't allocate memory for text buffer.\a\n");
+        fprintf(stderr, "Can't allocate memory for text buffer.\a\n");
         exit(1);
     }
 
-    puts("xatmas2 v2.6.2\n"
+    fprintf(stderr, "xatmas2 v2.6.2\n"
          "Copyright (c) 2004-2011 by Richard Jackman\n"
-         "Copyright (c) 2018 by Ivo van Poorten\n");
+         "Copyright (c) 2018 by Ivo van Poorten\n\n");
 
     if (argc > 1)
         strcpy(src_filename, argv[1]);
@@ -779,10 +775,10 @@ int main(int argc, char *argv[]) {
     fclose(stream);
 
     if (txtsiz == MAX_TXT_SIZ) {
-        puts("File is too long");
+        fprintf(stderr, "File is too long");
         exit(1);
     }
-    printf("%i bytes\n", txtsiz);
+    fprintf(stderr, "%i bytes\n", txtsiz);
 
 
     strcpy(lstfilename, src_filename);
@@ -819,7 +815,7 @@ int main(int argc, char *argv[]) {
     for (pass = 1; pass <= 2; pass++)
     {
         sgndtbptr1 = sgndtbptr2 = sgndtb;
-        printf("\n  pass %d\n", pass);
+        fprintf(stderr, "\n  pass %d\n", pass);
         linptr = txtptr = txtbuf;
         xlbfptr = xlbuf;
         orgflg = 0;
@@ -891,8 +887,9 @@ int main(int argc, char *argv[]) {
                 for (cnt = 1; cnt <= linlen; cnt++) {
                     if (*linptr < 0) {
                         linbegptr[linlen] = 0;
-                        printf("\a\nIllegal character at line %i:\n", linnum);
-                        puts(linbegptr);
+                        fprintf(stderr, "\a\nIllegal character at line %i:\n",
+                                                                    linnum);
+                        fprintf(stderr, "%s\n", linbegptr);
                         exit(1);
                     }
                     linptr++;
@@ -1018,7 +1015,7 @@ int main(int argc, char *argv[]) {
             default:           /* label                        */
             {
                 if (!isalpha(*txtptr)) {
-                    printf("%c is not valid", *txtptr);
+                    fprintf(stderr, "%c is not valid", *txtptr);
                     error("label must begin with alphabetic character");
                 }
                 pos = 0;
@@ -1067,7 +1064,7 @@ int main(int argc, char *argv[]) {
             }
 
             if (!isspace(*txtptr)) {
-                printf("Illegal character '%c' in symbol", *txtptr);
+                fprintf(stderr, "Illegal character '%c' in symbol", *txtptr);
                 error("Space expected");
             }
 
@@ -1261,7 +1258,7 @@ int main(int argc, char *argv[]) {
                 include_flg = 1;
                 operand_to_filename(include_filename);
 
-                printf("\nIncluding %s", include_filename);
+                fprintf(stderr, "\nIncluding %s", include_filename);
 
                 if ((stream3 = fopen(include_filename, "r")) == NULL)
                     error("Can't open INCLUDE file");
@@ -1274,7 +1271,7 @@ int main(int argc, char *argv[]) {
                 if (txtsiz > MAX_TXT_SIZ - txtsiz)
                     error("INCLUDE File is too long");
 
-                printf(": %i bytes\n", include_txtsiz);
+                fprintf(stderr, ": %i bytes\n", include_txtsiz);
 
                 txtendptr = includebuf + include_txtsiz;
 
@@ -1305,7 +1302,7 @@ int main(int argc, char *argv[]) {
                     if (*outflgs && !lstflg) {
                         lstflg++;
                         if ((stream2 = fopen(lstfilename, "w")) == 0) {
-                            printf("Can't open %s\n", lstfilename);
+                            fprintf(stderr, "Can't open %s\n", lstfilename);
                             error("Can't open LST file");
                         }
                     }
@@ -1330,7 +1327,7 @@ int main(int argc, char *argv[]) {
                             error("ORG value is undefined");
                         orgflg = 1;
                     } else {
-                        printf("to %4X\n", pc - 1);     /*write NDAD */
+                        fprintf(stderr, "to %4X\n", pc - 1);  /*write NDAD */
                         *sgndtbptr1++ = pc - 1;
                     }
 
@@ -1347,7 +1344,7 @@ int main(int argc, char *argv[]) {
                         toxlbuf((char)((*sgndtbptr2++) / 256));
                         pc = pcsv;
                     }
-                    printf("Segment %4X ", pc);
+                    fprintf(stderr, "Segment %4X ", pc);
 
                 }
                 continue;
@@ -1512,8 +1509,8 @@ int main(int argc, char *argv[]) {
                 braoffset = temp = expresstoi_p2() - (pc + 1);
                 if (pass == 2) {
                     if (temp < -128 || temp > 127) {
-                        printf("\nAttempted to branch a distance of %i. "
-                               "(Range -128 to 127 is permitted.)", temp);
+                        fprintf(stderr, "\nAttempted to branch a distance "
+                            "of %i. (Range -128 to 127 is permitted.)", temp);
                         error("Branch out of range");
                     }
                 }
@@ -1675,7 +1672,7 @@ int main(int argc, char *argv[]) {
                     }
                     break;
                 default:
-                    printf("Unexpected character: '%c' -- ", *txtptr);
+                    fprintf(stderr, "Unexpected character: '%c' -- ", *txtptr);
                     error("Symbol contains illegal character");
                     break;
                 }
@@ -1722,8 +1719,8 @@ int main(int argc, char *argv[]) {
                 error("Illegal addressing");
             if (pass == 2)
                 if (*xlbfptr != (char)data[cnt][operno]) {
-                    printf("\n\nOpcode mismatch %X <> %X", 0xff & (*xlbfptr),
-                           0xff & data[cnt][operno]);
+                    fprintf(stderr, "\n\nOpcode mismatch %X <> %X",
+                                0xff & (*xlbfptr), 0xff & data[cnt][operno]);
                     error("This zero-page label must be defined "
                            "before present line.");
                 }
@@ -1741,10 +1738,10 @@ int main(int argc, char *argv[]) {
                 break;
             }
         }                       // end toxlbuf
-        printf("to %4X\n", pc - 1);
+        fprintf(stderr, "to %4X\n", pc - 1);
 
         if (pass == 1) {
-            puts("Checking symbols ...");
+            fprintf(stderr, "Checking symbols ...\n");
 
             for (i = 0; i < macnum; i++) {
                 if (symnum >= MAXSYMS - 1)
@@ -1761,7 +1758,7 @@ int main(int argc, char *argv[]) {
 
             for (i = symnum - 1; i > 1; i--) {
                 if (strcmp(sss[i].symbol, sss[i - 1].symbol) == 0) {
-                    printf("\nSame label twice -\n");
+                    fprintf(stderr, "\nSame label twice -\n");
                     list_label(i - 1);
                     list_label(i);
                     twiceflg = 1;
@@ -1790,14 +1787,14 @@ int main(int argc, char *argv[]) {
     if (lstflg)
         fclose(stream2);
 
-    puts("");
+    fputc('\n', stderr);
     symnum = 0;
     for (i = 0; i < symnumext; i++) {
         if (sss[i].macf == MACRO)
             continue;
         if (((sss[i].macf == UNUSED) || (sss[i].macf == MACRO_UNUSED))
             && sss[i].symbol[0])
-            printf("Unused symbol: %s\n", sss[i].symbol);
+            fprintf(stderr, "Unused symbol: %s\n", sss[i].symbol);
         if ((sss[i].symadr == sss[symnum - 1].symadr) && (symnum > 0)) {
             /* double entry */
             if (sss[symnum - 1].symbol[0] && sss[i].symbol[0]) {
@@ -1808,7 +1805,7 @@ int main(int argc, char *argv[]) {
                         strcpy(sss[symnum - 1].symbol, sss[i].symbol);
                     continue;
                 } else
-                    printf("%s and %s both = $%X\n", sss[i].symbol,
+                    fprintf(stderr, "%s and %s both = $%X\n", sss[i].symbol,
                            sss[symnum - 1].symbol, sss[i].symadr);
             }
             if (!(sss[symnum - 1].symbol[0]))
@@ -1829,12 +1826,12 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
 
-    printf("\nSaving binary file %s\n", xexfilename);
+    fprintf(stderr, "\nSaving binary file %s\n", xexfilename);
     txtsiz = fwrite(xlbuf, 1, xlbfptr - xlbuf, stream);
     if (txtsiz != xlbfptr - xlbuf) {
         fprintf(stderr, "Can't save %s\n", xexfilename);
         exit(1);
     }
-    printf("%d bytes\n", txtsiz);
+    fprintf(stderr, "%d bytes\n", txtsiz);
     fclose(stream);
 }
