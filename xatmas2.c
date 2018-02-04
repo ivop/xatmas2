@@ -758,7 +758,7 @@ int main(int argc, char *argv[]) {
     if (argc > 1)
         src_filename = argv[1];
     else {
-        fprintf(stderr, "%s: usage: codegen <file.src>\n", argv[0]);
+        fprintf(stderr, "%s: usage: xatmas2 <file.src>\n", argv[0]);
         exit(1);
     }
 
