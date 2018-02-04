@@ -137,10 +137,8 @@ short mismatchln_flg[10];
 short bytcnt = 0;
 short prnlnum = 0;
 
-char src_filename[300];
+char *src_filename, *lstfilename, *xexfilename;
 char include_filename[300];
-char xexfilename[300];
-char lstfilename[300];
 
 ssstype sss[MAXSYMS];
 
@@ -758,7 +756,7 @@ int main(int argc, char *argv[]) {
          "Copyright (c) 2018 by Ivo van Poorten\n\n");
 
     if (argc > 1)
-        strcpy(src_filename, argv[1]);
+        src_filename = argv[1];
     else {
         fprintf(stderr, "%s: usage: codegen <file.src>\n", argv[0]);
         exit(1);
@@ -769,7 +767,6 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
 
-    // read SRC file into buffer
     txtsiz = fread(txtbuf, 1, MAX_TXT_SIZ, stream);
     fclose(stream);
 
@@ -779,11 +776,15 @@ int main(int argc, char *argv[]) {
     }
     fprintf(stderr, "%i bytes\n", txtsiz);
 
+    lstfilename = strdup(src_filename);
+    lstfilename = realloc(lstfilename, strlen(lstfilename) + 4);
+    strcat(lstfilename, ".lis");
 
-    strcpy(lstfilename, src_filename);
-    strcpy(strchr(lstfilename, '.'), ".LIS");
-
-    strcpy(xexfilename, "AUTORUN.SYS");
+    if (!xexfilename) {
+        xexfilename = strdup(src_filename);
+        xexfilename = realloc(xexfilename, strlen(xexfilename) + 4);
+        strcat(xexfilename, ".xex");
+    }
 
 /********************** Now work on buffer *********************/
 
