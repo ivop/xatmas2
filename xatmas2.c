@@ -136,13 +136,17 @@ char cmpflbytln[9][40];
 short mismatchln_flg[10];
 short bytcnt = 0;
 short prnlnum = 0;
+
 char src_filename[300];
+char include_filename[300];
+char xexfilename[300];
+char lstfilename[300];
 
 ssstype sss[MAXSYMS];
 
-FILE *stream;
-FILE *stream2;
-FILE *stream3;
+FILE *stream;       // src file, later xex file
+FILE *stream2;      // lis file
+FILE *stream3;      // included files
 fpos_t pos2;
 
 static const char opcdat1[] = "BRKPHPASLCLCPLPROLSECRTIPHALSRCLIRTSPLARORSEI"
@@ -736,10 +740,6 @@ int main(int argc, char *argv[]) {
     char *labptr;
 
     char prnlnbuf[120];
-
-    char include_filename[300];
-    char xexfilename[300];
-    char lstfilename[300];
 
     short lo_fg;
     short objfile_flag = 0;
