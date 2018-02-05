@@ -137,6 +137,9 @@ short mismatchln_flg[10];
 short bytcnt;
 short prnlnum;
 
+char xlbuf[MAX_BIN_SIZ];
+char prnlnbuf[120];
+
 char *src_filename, *lstfilename, *xexfilename;
 char include_filename[300];
 
@@ -702,7 +705,6 @@ int main(int argc, char *argv[]) {
 
     char *includebuf;
     char *txtendptr;            /* pointer to end of text Buffer (=10) */
-    char xlbuf[MAX_BIN_SIZ];
     char *linptr;
     char *ptr;                  /* temporary pointer */
     int pos;
@@ -736,8 +738,6 @@ int main(int argc, char *argv[]) {
     unsigned short lclbnum[MAXMACLEV];
     char lab[5];
     char *labptr;
-
-    char prnlnbuf[120];
 
     short lo_fg;
     short objfile_flag = 0;
