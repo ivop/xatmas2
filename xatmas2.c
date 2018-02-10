@@ -14,6 +14,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <err.h>
+#include <stdarg.h>
 
 #define fclose(x) if (x) { fclose(x); x=NULL; }
 
@@ -173,6 +174,20 @@ static const char brastrdat[] = "BPLBMIBVCBVSBCCBCSBNEBEQ";
 static const unsigned short bradat[] =
         { 0x10, 0x30, 0x50, 0x70, 0x90, 0xb0, 0xd0, 0xf0 };
 static const int intab[] = { 0x40, 0, 0x20, 0x60, 0xA0, 0xC0, 0x80, 0xE0 };
+
+// ----------------------------------------------------------------------------
+
+static void info_and_fatal(const int s, char *f, ...) {
+    va_list ap;
+    va_start(ap,f);
+    fprintf(stderr, "xatmas2: %s: ", s ? "fatal" : "info");
+    vfprintf(stderr, f, ap);
+    va_end(ap);
+    if (s) exit(s);
+}
+
+#define info(...)    info_and_fatal(0, __VA_ARGS__)
+#define fatal(...)   info_and_fatal(1, __VA_ARGS__)
 
 // ----------------------------------------------------------------------------
 
@@ -700,6 +715,8 @@ static int chkopc(const char opcstring[]) {
 
 // ----------------------------------------------------------------------------
 
+#define NEXT do { argc--;argv++; } while(0)
+
 int main(int argc, char *argv[]) {
     int braoffset;
 
@@ -746,35 +763,36 @@ int main(int argc, char *argv[]) {
     char *txtbuf;
 
     txtbuf = (char *)malloc(MAX_TXT_SIZ);
-    if (txtbuf == NULL) {
-        fprintf(stderr, "Can't allocate memory for text buffer.\a\n");
-        exit(1);
+    if (!txtbuf) fatal("Can't allocate memory for text buffer.\n");
+
+    NEXT;
+    while (argc--) {
+        if (!strcmp(*argv, "-o")) {
+            NEXT;
+            if (argc >= 0) xexfilename = *argv;
+            else      fatal("-o needs an argument\n");
+        } else {
+            src_filename = *argv;
+        }
+        argv++;
     }
 
-    fprintf(stderr, "xatmas2 v2.6.2\n"
-         "Copyright (c) 2004-2011 by Richard Jackman\n"
-         "Copyright (c) 2018 by Ivo van Poorten\n\n");
-
-    if (argc > 1)
-        src_filename = argv[1];
-    else {
-        fprintf(stderr, "%s: usage: xatmas2 <file.src>\n", argv[0]);
-        exit(1);
+    if (!src_filename) {
+        info("\n\n\txatmas2 v2.6.2\n"
+             "\tCopyright (c) 2004-2011 by Richard Jackman\n"
+             "\tCopyright (c) 2018 by Ivo van Poorten\n\n");
+        fatal("usage: xatmas2 [-o output.xex] <file.src>\n");
     }
 
-    if ((stream = fopen(src_filename, "r")) == NULL) {
-        fprintf(stderr, "%s: Can't open %s\n", argv[0], src_filename);
-        exit(1);
-    }
+    if (!((stream = fopen(src_filename, "r"))))
+        fatal("can't open %s\n", src_filename);
 
     txtsiz = fread(txtbuf, 1, MAX_TXT_SIZ, stream);
     fclose(stream);
 
-    if (txtsiz == MAX_TXT_SIZ) {
-        fprintf(stderr, "File is too long");
-        exit(1);
-    }
-    fprintf(stderr, "%i bytes\n", txtsiz);
+    if (txtsiz == MAX_TXT_SIZ) fatal("file is too long");
+
+    info("source size: %i bytes\n", txtsiz);
 
     lstfilename = strdup(src_filename);
     lstfilename = realloc(lstfilename, strlen(lstfilename) + 4);
@@ -886,11 +904,7 @@ int main(int argc, char *argv[]) {
             if (!maclevel && pass == 1) { /*Test line for illegal characters */
                 for (cnt = 1; cnt <= linlen; cnt++) {
                     if (*linptr < 0) {
-                        linbegptr[linlen] = 0;
-                        fprintf(stderr, "\a\nIllegal character at line %i:\n",
-                                                                    linnum);
-                        fprintf(stderr, "%s\n", linbegptr);
-                        exit(1);
+                        fatal("illegal character at line %i:\n", linnum);
                     }
                     linptr++;
                 }
