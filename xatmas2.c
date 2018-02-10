@@ -759,7 +759,7 @@ int main(int argc, char *argv[]) {
     }
 
     if (!src_filename) {
-        info("\n\n\txatmas2 v2.6.2\n"
+        info("\n\n\txatmas2 v2.7\n"
              "\tCopyright (c) 2004-2011 by Richard Jackman\n"
              "\tCopyright (c) 2018 by Ivo van Poorten\n\n");
         fatal("usage: xatmas2 [-o output.xex] <file.src>\n");
