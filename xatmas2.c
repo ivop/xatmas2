@@ -177,12 +177,16 @@ static const int intab[] = { 0x40, 0, 0x20, 0x60, 0xA0, 0xC0, 0x80, 0xE0 };
 
 // ----------------------------------------------------------------------------
 
+static int quiet;
+
 static void info_and_fatal(const int s, char *f, ...) {
     va_list ap;
     if (s) {
-        fprintf(stderr, "xatmas2: error at line %d\n", linnum);
+        if (linnum) fprintf(stderr, "xatmas2: error at line %d\n", linnum);
         if (pc) fprintf(stderr, "xatmas2: address: $%04X\n", pc);
         if (maclevel) fprintf(stderr, "xatmas2: error in macro");
+    } else if (quiet) {
+        return;
     }
     va_start(ap,f);
     fprintf(stderr, "xatmas2: %s: ", s ? "fatal" : "info");
@@ -752,6 +756,11 @@ int main(int argc, char *argv[]) {
             NEXT;
             if (argc >= 0) xexfilename = *argv;
             else      fatal("-o needs an argument\n");
+        } else if (!strcmp(*argv, "-q")) {
+            quiet = 1;
+        } else if (!strcmp(*argv, "-v")) {
+            src_filename = NULL;
+            break;
         } else {
             src_filename = *argv;
         }
@@ -762,7 +771,7 @@ int main(int argc, char *argv[]) {
         info("\n\n\txatmas2 v2.7\n"
              "\tCopyright (c) 2004-2011 by Richard Jackman\n"
              "\tCopyright (c) 2018 by Ivo van Poorten\n\n");
-        fatal("usage: xatmas2 [-o output.xex] <file.src>\n");
+        fatal("usage: xatmas2 [-q] [-v] [-o output.xex] <file.src>\n");
     }
 
     if (!((stream = fopen(src_filename, "r"))))
