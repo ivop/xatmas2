@@ -14,10 +14,10 @@ clean:
 	rm -f xatmas2 AUTORUN.SYS
 
 distclean: clean
-	rm -f *~ */*~ tst/*.xex
+	rm -f *~ */*~ opctest.xex atmas.xex
 
 test:	xatmas2
-	./xatmas2 tst/OPCTEST.SRC
-	diff -s tst/OPCTEST.OK tst/OPCTEST.SRC.xex
-	./xatmas2 tst/ATMAS.SRC
-	diff -s tst/ATMAS.OK tst/ATMAS.SRC.xex
+	./xatmas2 -o opctest.xex tst/OPCTEST.SRC
+	diff -s tst/OPCTEST.OK opctest.xex
+	./xatmas2 -o atmas.xex tst/ATMAS.SRC
+	diff -s tst/ATMAS.OK atmas.xex
