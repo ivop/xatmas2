@@ -669,7 +669,7 @@ static void toxlbuf(char ch) {
             else {
                 if (bytcnt % LSTBYTES == 1) {
                     prnlnum++;
-                    sprintf(prnlnbuf2[prnlnum - 1], "%4X: ", pc - 1);
+                    sprintf(prnlnbuf2[prnlnum - 1], "%04X: ", pc - 1);
                 }
                 strcat(prnlnbuf2[prnlnum - 1], tempstr);
             }
@@ -1094,7 +1094,7 @@ int main(int argc, char *argv[]) {
                         if (!(strstr("EQU EPZ ORG", opcode)
                               && (strlen(opcode) == 3))) {
                             if (pc != pc_sav)
-                                sprintf(prnlnbufbeg, "%4X: ", pc); // PC ADDR
+                                sprintf(prnlnbufbeg, "%04X: ", pc); // PC ADDR
                             else
                                 sprintf(prnlnbufbeg, "    : ");
                             pc_sav = pc;
@@ -1329,7 +1329,7 @@ int main(int argc, char *argv[]) {
                             fatal("ORG value is undefined\n");
                         orgflg = 1;
                     } else {
-                        info("segment end: $%4X\n", pc - 1);  /*write NDAD */
+                        info("segment end: $%04X\n", pc - 1);  /*write NDAD */
                         *sgndtbptr1++ = pc - 1;
                     }
 
@@ -1346,7 +1346,7 @@ int main(int argc, char *argv[]) {
                         toxlbuf((char)((*sgndtbptr2++) / 256));
                         pc = pcsv;
                     }
-                    info("segment start: $%4X\n", pc);
+                    info("segment start: $%04X\n", pc);
                 }
                 continue;
             }
@@ -1734,7 +1734,7 @@ int main(int argc, char *argv[]) {
                 break;
             }
         }                       // end toxlbuf
-        info("segment end: $%4X\n", pc - 1);
+        info("segment end: $%04X\n", pc - 1);
 
         if (pass == 1) {
             info("checking symbols...\n");
