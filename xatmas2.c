@@ -179,6 +179,11 @@ static const int intab[] = { 0x40, 0, 0x20, 0x60, 0xA0, 0xC0, 0x80, 0xE0 };
 
 static void info_and_fatal(const int s, char *f, ...) {
     va_list ap;
+    if (s) {
+        fprintf(stderr, "xatmas2: error at line %d\n", linnum);
+        if (pc) fprintf(stderr, "xatmas2: address: $%04X\n", pc);
+        if (maclevel) fprintf(stderr, "xatmas2: error in macro");
+    }
     va_start(ap,f);
     fprintf(stderr, "xatmas2: %s: ", s ? "fatal" : "info");
     vfprintf(stderr, f, ap);
@@ -188,28 +193,6 @@ static void info_and_fatal(const int s, char *f, ...) {
 
 #define info(...)    info_and_fatal(0, __VA_ARGS__)
 #define fatal(...)   info_and_fatal(1, __VA_ARGS__)
-
-// ----------------------------------------------------------------------------
-
-static void error(char *errstr) {
-    int len;
-    char partstr[100];
-
-    fprintf(stderr, "\n\nERROR --\n%s\nat ", errstr);
-    if (pc) fprintf(stderr, "address $%X, ", pc);
-    fprintf(stderr, "line %d\n\n\a", linnum);
-    fprintf(stderr, "%s", linbuf[0]);
-
-    if (maclevel == 0) {
-        len = txtptr - linbegptr;
-        strcpy(partstr, linbuf[0]);
-        partstr[len] = '\0';
-        fprintf(stderr, "%s", partstr);
-    } else {
-        fprintf(stderr, "Error in macro:\n%s", linbuf[maclevel]);
-    }
-    exit(linnum);
-}
 
 // ----------------------------------------------------------------------------
 
@@ -263,13 +246,13 @@ static unsigned int symtoi1() {
     if (ch == '%') {            /*  %:Binary */
         txtptr++;
         if (!(*txtptr == '0' || *txtptr == '1'))
-            error("Binary digit 0 or 1 expected.");
+            fatal("Binary digit 0 or 1 expected.\n");
         ch = 0;
         chrcnt = 1;
         while (*txtptr == '0' || *txtptr == '1') {
             if (chrcnt++ > 8)
-                error
-                    ("Too many binary digits. Maximum number of digits is 8. e.g. %10010011");
+                fatal("too many binary digits. maximum number of digits is "
+                      "8. e.g. %10010011\n");
             ch <<= 1;
             ch += *txtptr++ - '0';
         }
@@ -278,12 +261,12 @@ static unsigned int symtoi1() {
     if (ch == '$') {            /*  $:Hex */
         txtptr++;
         if (isxdigit(*txtptr) == 0)
-            error("Hexidecimal digit expected");
+            fatal("hexidecimal digit expected\n");
         chrcnt = 1;
         while (isxdigit(*txtptr)) {
             if (chrcnt++ > 4)
-                error
-                    ("Too many hexdecimal digits. Maximum number of digits is 4 eg. $1234.");
+                fatal("too many hexdecimal digits. maximum number of digits "
+                      "is 4 eg. $1234.\n");
             *ptr++ = *txtptr++;
         }
         *ptr = '\0';
@@ -307,9 +290,9 @@ static unsigned int symtoi1() {
         break;
     default:                   //label
         if (isspace(*txtptr))
-            error("Ilegal space, tab, or end of line");
+            fatal("illegal space, tab, or end of line\n");
         if (!(isalpha(*txtptr)))
-            error("Label must begin with a letter");
+            fatal("label must begin with a letter\n");
 
         while (isalnum(*txtptr))
             *ptr++ = (char)toupper(*txtptr++);
@@ -358,10 +341,9 @@ static unsigned int symtoi1() {
             symfg = 1;
             return (sssptr->symadr);
         } else {
-            error("label undefined");
+            fatal("label undefined");
         }
     }
-//if (pass == 2) error("Label undefined"); //probably don't need this
     return (NOTFOUND);
 }
 
@@ -469,7 +451,7 @@ static unsigned int expresstoi() {
                         while (temp != '(') {
                             postfix[j++] = temp;
                             if (tos == 0)
-                                error("Missing opening parenthisis");
+                                fatal("missing opening parenthesis\n");
                             temp = stack[--tos];
                         }
                     }
@@ -511,10 +493,10 @@ static unsigned int expresstoi() {
                 intstack[tos++] = a / b;
                 break;
             default:
-                if (*ptr == '(') error("Missing closing parenthisis");
-                fprintf(stderr, "infix: %s   -Character '%c' in %s operand "
-                        "is %s", infix, *ptr, postfix, operand);
-                error("Illegal character in postfix expression");
+                if (*ptr == '(') fatal("missing closing parenthisis\n");
+                fatal("infix: %s - character '%c' in %s operand "
+                        "is %s. illegal character in postfix expression\n",
+                        infix, *ptr, postfix, operand);
                 break;
             }
         }
@@ -526,9 +508,9 @@ static unsigned int expresstoi() {
     result = intstack[--tos];
 
     if (tos) {
-        fprintf(stderr, "\n\noperand: %s   infix: %s   postfix: %s", operand,
-                                                        infix, postfix);
-        error("Illegal syntax. Can't resolve expression");
+        fatal("operand: %s   infix: %s   postfix: %s  "
+              "illegal syntax. can't resolve expression\n",
+              operand, infix, postfix);
     }
 
     if (notfound)
@@ -569,7 +551,7 @@ static void sectyp(char line_type) {
             }
         } else /* no label */ if ((pass == 2) && (pc > 0xff)) {
             if (symnumext >= MAXSYMS)
-                error("Too many symbols");
+                fatal("too many symbols\n");
             sss[symnumext].symtyp = line_type;
             sss[symnumext++].symadr = pc;
         }
@@ -609,7 +591,7 @@ static void operand_to_filename(char filename[]) {
     switch (*txtptr++) {
     case '\n':
     case '\t':
-        error("Filename missing");
+        fatal("filename missing\n");
         break;
     case ' ':
         linptr = txtptr;
@@ -629,7 +611,7 @@ static void operand_to_filename(char filename[]) {
                 }
             }
         } else
-            error("Filename missing");
+            fatal("filename missing\n");
         break;
     }
     operand[cnt] = 0;
@@ -665,8 +647,7 @@ static void find_operand(void) {
 static void toxlbuf(char ch) {
     char tempstr[10];
 
-    if (!orgflg)
-        error("ORG value must precede this line");
+    if (!orgflg) fatal("ORG value must precede this line\n");
 
     *xlbfptr = ch;
 
@@ -833,7 +814,7 @@ int main(int argc, char *argv[]) {
     for (pass = 1; pass <= 2; pass++)
     {
         sgndtbptr1 = sgndtbptr2 = sgndtb;
-        fprintf(stderr, "\n  pass %d\n", pass);
+        info("pass %d\n", pass);
         linptr = txtptr = txtbuf;
         xlbfptr = xlbuf;
         orgflg = 0;
@@ -924,8 +905,8 @@ int main(int argc, char *argv[]) {
                     if (strchr(", \n+-", *ptr)) { /*Characters which can 
                                                     precede a local label! */
                         if (cnt > 4)
-                            error("Local labels cannot be longer than "
-                                  "5 characters");
+                            fatal("local labels cannot be longer than "
+                                  "5 characters\n");
                         ptr++;
                         labptr = lab;
                         while (cnt) {
@@ -1030,30 +1011,30 @@ int main(int argc, char *argv[]) {
             {
                 if (!isalpha(*txtptr)) {
                     fprintf(stderr, "%c is not valid", *txtptr);
-                    error("label must begin with alphabetic character");
+                    fatal("label must begin with alphabetic character\n");
                 }
                 pos = 0;
                 while (isalnum(*txtptr))
                     label[pos++] = (char)toupper(*txtptr++);
                 if (pos > 8)
-                    error("Label is too long");
+                    fatal("label is too long\n");
                 if (*txtptr == '@')
                     label[pos++] = *txtptr++;
                 if (!isspace(*txtptr))
-                    error("Label must consist only of alphabetic and numeric "
-                         "characters");
+                    fatal("label must consist only of alphabetic and numeric "
+                         "characters\n");
                 label[pos] = 0;
 
                 sprintf(labelstr, " %s ", label);
                 if (strstr(opcds, labelstr))
-                    error ("You can't have an opcode at the beginning "
-                           "of a line");
+                    fatal("you can't have an opcode at the beginning "
+                           "of a line\n");
                 if (strstr(assdirecs, labelstr))
-                    error ("You can't have an assembler directive the "
-                           "beginning of a line");
+                    fatal("you can't have an assembler directive the "
+                           "beginning of a line\n");
                 if (strstr(assdirecssolo, labelstr))
-                    error("You can't have an assembler directive the "
-                          "beginning of a line");
+                    fatal("you can't have an assembler directive the "
+                          "beginning of a line\n");
             }
             }
 
@@ -1064,7 +1045,7 @@ int main(int argc, char *argv[]) {
             if (*txtptr == '\n')
                 continue;
             if (isalpha(*txtptr) == 0)
-                error("Alphabetic character expected");
+                fatal("alphabetic character expected\n");
             ptr = opcode;
 
             while (isalnum(*txtptr))
@@ -1077,10 +1058,9 @@ int main(int argc, char *argv[]) {
                 txtptr++;
             }
 
-            if (!isspace(*txtptr)) {
-                fprintf(stderr, "Illegal character '%c' in symbol", *txtptr);
-                error("Space expected");
-            }
+            if (!isspace(*txtptr))
+                fatal("illegal character '%c' in symbol. space expected",
+                                                                    *txtptr);
 
             *ptr = 0;           //opcode finalised
 
@@ -1090,8 +1070,8 @@ int main(int argc, char *argv[]) {
                 //Check operand for dirictives
                 sprintf(opcstr, " %s ", opcode);
                 if (strstr(assdirecs, opcstr))
-                    error
-                        ("Directive must be followed by a single space (not tab) and an operand");
+                    fatal("directive must be followed by a single space "
+                          "(not tab) and an operand\n");
             }
 
             *prnlnbuf = 0;
@@ -1131,9 +1111,9 @@ int main(int argc, char *argv[]) {
             if (*label) {
                 if (pass == 1) {
                     if (symnum >= MAXSYMS - 1)
-                        error("Too many labels");
+                        fatal("too many labels\n");
                     if (macnum >= MAXMACSYMS - 1)
-                        error("Too many labels");
+                        fatal("too many labels\n");
                 }
 
 /* EPZ EQU  LABEL AT LINE BEGIN*/
@@ -1154,7 +1134,7 @@ int main(int argc, char *argv[]) {
 /* RMB  LABEL AT LINE BEGIN */ //(Init ving(?) memory bytes)
                 if (strcmp(opcode, "RMB") == 0) {
                     if (!rmbflg)
-                        error("INITRMB value must precede this line");
+                        fatal("INITRMB value must precede this line\n");
 
                     if (pass == 1) {
                         strcpy(sss[symnum].symbol, label);
@@ -1171,7 +1151,7 @@ int main(int argc, char *argv[]) {
                 if (strcmp(opcode, "MACRO") == 0)       // MovAl   MACRO A,N
                 {
                     if (macroflg)
-                        error("MEND missing");
+                        fatal("MEND missing\n");
                     macroflg++;
                     if (pass == 1) {
                         find_operand(); // A,N
@@ -1224,7 +1204,7 @@ int main(int argc, char *argv[]) {
                     macroflg--;
                 else {
                     if (!maclevel)
-                        error("MEND without MACRO");
+                        fatal("MEND without MACRO\n");
                     lclbnum[maclevel] = 0;
                     linbegptr = linbegsav[--maclevel];
                     linlen = linlensav[maclevel];
@@ -1268,14 +1248,14 @@ int main(int argc, char *argv[]) {
 /* INCLUDE */
             if (strcmp(opcode, "INCLUDE") == 0) {
                 if (include_flg)
-                    error("Can't have 'INCLUDE' in an included file.");
+                    fatal("can't have 'INCLUDE' in an included file\n");
                 include_flg = 1;
                 operand_to_filename(include_filename);
 
-                fprintf(stderr, "\nIncluding %s", include_filename);
+                info("including %s\n", include_filename);
 
                 if ((stream3 = fopen(include_filename, "r")) == NULL)
-                    error("Can't open INCLUDE file");
+                    fatal("can't open INCLUDE file");
                 includebuf = txtendptr;
                 include_txtsiz =
                     fread(includebuf, 1, MAX_TXT_SIZ - txtsiz, stream3);
@@ -1283,7 +1263,7 @@ int main(int argc, char *argv[]) {
 
                 txtsiz += include_txtsiz;
                 if (txtsiz > MAX_TXT_SIZ - txtsiz)
-                    error("INCLUDE File is too long");
+                    fatal("INCLUDE File is too long\n");
 
                 fprintf(stderr, ": %i bytes\n", include_txtsiz);
 
@@ -1316,8 +1296,7 @@ int main(int argc, char *argv[]) {
                     if (*outflgs && !lstflg) {
                         lstflg++;
                         if ((stream2 = fopen(lstfilename, "w")) == 0) {
-                            fprintf(stderr, "Can't open %s\n", lstfilename);
-                            error("Can't open LST file");
+                            fatal("can't open %s\n", lstfilename);
                         }
                     }
                 }
@@ -1338,10 +1317,10 @@ int main(int argc, char *argv[]) {
                 {
                     if (!orgflg) {      /* first ORG */
                         if (*txtptr == '*')
-                            error("ORG value is undefined");
+                            fatal("ORG value is undefined\n");
                         orgflg = 1;
                     } else {
-                        fprintf(stderr, "to %4X\n", pc - 1);  /*write NDAD */
+                        info("segment end: $%4X\n", pc - 1);  /*write NDAD */
                         *sgndtbptr1++ = pc - 1;
                     }
 
@@ -1358,8 +1337,7 @@ int main(int argc, char *argv[]) {
                         toxlbuf((char)((*sgndtbptr2++) / 256));
                         pc = pcsv;
                     }
-                    fprintf(stderr, "Segment %4X ", pc);
-
+                    info("segment start: $%4X\n", pc);
                 }
                 continue;
             }
@@ -1401,7 +1379,7 @@ int main(int argc, char *argv[]) {
                 txtptr++;
                 cnt = expresstoi_p2();
                 if (*txtptr != ',')
-                    error("Comma followed by byte value expected");
+                    fatal("comma followed by byte value expected\n");
                 txtptr++;
                 ch = (char)expresstoi_p2();
                 for (i = 0; i < cnt; i++)
@@ -1456,7 +1434,7 @@ int main(int argc, char *argv[]) {
                             while ((*txtptr != ch) && (*txtptr != '\n'))
                                 toxlbuf(*txtptr++);
                         } else
-                            error("invalid string marking");
+                            fatal("invalid string marking\n");
                     }
                 } while (*(++txtptr) == ',');
                 continue;
@@ -1489,8 +1467,8 @@ int main(int argc, char *argv[]) {
                 } else {
                     if (strlen(opcode) == 3)
                         if (strstr(opcds, opcode))
-                            error
-                                ("Opcode must be followed by a single space (not tab) and an operand");
+                            fatal("opcode must be followed by a single space "
+                                  "(not tab) and an operand\n");
                     strcpy(operand, opcode);
                     strcpy(opcode, "JSR");
                     txtptr = tpsav;
@@ -1503,7 +1481,7 @@ int main(int argc, char *argv[]) {
                 sectyp(';');
                 if (*operand == '(') {
                     if (operand[strlen(operand) - 1] != ')')
-                        error("Illegal syntax or addressing");
+                        fatal("illegal syntax or addressing\n");
                     toxlbuf(108);
                 } else
                     toxlbuf(76);
@@ -1522,11 +1500,8 @@ int main(int argc, char *argv[]) {
                 toxlbuf((char)bradat[cnt]);
                 braoffset = temp = expresstoi_p2() - (pc + 1);
                 if (pass == 2) {
-                    if (temp < -128 || temp > 127) {
-                        fprintf(stderr, "\nAttempted to branch a distance "
-                            "of %i. (Range -128 to 127 is permitted.)", temp);
-                        error("Branch out of range");
-                    }
+                    if (temp < -128 || temp > 127)
+                        fatal("branch out of range\n");
                 }
                 toxlbuf((char)braoffset);
                 continue;
@@ -1539,14 +1514,13 @@ int main(int argc, char *argv[]) {
                     if ((strcmp(opcode, "MACRO") == 0) ||
                         (strcmp(opcode, "EPZ") == 0) ||
                         (strcmp(opcode, "EQU") == 0))
-                        error("Label missing at beginning of line");
+                        fatal("label missing at beginning of line\n");
                         // since otherwise these would have been taken care of
 
-                    error("A subroutine can't have an operand");
+                    fatal("subroutine can't have an operand\n");
                 }
 
             }
-
 
 /* JSR */
             if (!strcmp(opcode, "JSR")) {
@@ -1563,8 +1537,8 @@ int main(int argc, char *argv[]) {
             if (operand[0] == '\'') {
                 sectyp('\'');
                 if (data[cnt][NN] == 0)
-                    error("direct addressing (') cannot be used with "
-                          "this opcode");
+                    fatal("direct addressing (') cannot be used with "
+                          "this opcode\n");
                 txtptr++;
                 ch = *txtptr++;
                 if (*txtptr == '\'')
@@ -1578,8 +1552,8 @@ int main(int argc, char *argv[]) {
 /* opc #nn */
             if (operand[0] == '#') {
                 if (data[cnt][NN] == 0)
-                    error("direct addressing (#) cannot be used with "
-                          "this opcode");
+                    fatal("direct addressing (#) cannot be used with "
+                          "this opcode\n");
 
                 txtptr++;
                 intval = expresstoi_p2();
@@ -1633,7 +1607,7 @@ int main(int argc, char *argv[]) {
                     case 'Y':  //   ,Y
                     case 'y':
                         if (*(opcode + 2) == 'Y')
-                            error("Can't have ,Y with this opcode");
+                            fatal("can't have ,Y with this opcode\n");
                         if (*(opcode + 2) == 'X')       //  OPX aa,Y
                             operno = AAY;
                         else
@@ -1642,11 +1616,11 @@ int main(int argc, char *argv[]) {
                     case 'X':  //   ,X
                     case 'x':
                         if (*(opcode + 2) == 'X')
-                            error("Can't have X after comma with this opcode");
+                          fatal("Can't have X after comma with this opcode\n");
                         switch (*(++txtptr)) {
                         case ')':      //  OPC (aa,X)
                             if (*operand != '(')
-                                error("Forward bracket missing");
+                                fatal("opening bracket missing\n");
                             operno = BAAXB;
                             break;
                         default:
@@ -1655,13 +1629,13 @@ int main(int argc, char *argv[]) {
                         }
                         break;
                     default:
-                        error("Must have X or Y after comma -- ");
+                        fatal("must have X or Y after comma\n");
                         break;
                     }
                     break;
                 case ')':
                     if (*operand != '(')
-                        error("Forward bracket missing");
+                        fatal("opening bracket missing\n");
                     switch (*(++txtptr)) {
                     case ',':
                         switch (*(++txtptr)) {
@@ -1669,33 +1643,32 @@ int main(int argc, char *argv[]) {
                         case 'y':
                             if ((*(opcode + 2) == 'Y')
                                 || (*(opcode + 2) == 'X'))
-                                error("Can't use indirect addressing with "
-                                      "this opcode");
+                                fatal("can't use indirect addressing with "
+                                      "this opcode\n");
 
                             operno = BAABY;
                             break;      // OPA (AA),Y
                         default:
-                            error("Must have Y after comma for indirect "
-                                  "addressing");
+                            fatal("must have Y after comma for indirect "
+                                  "addressing\n");
                             break;
                         }
                         break;
                     default:
-                        error("Comma missing after bracket");
+                        fatal("comma missing after bracket\n");
                         break;
                     }
                     break;
                 default:
-                    fprintf(stderr, "Unexpected character: '%c' -- ", *txtptr);
-                    error("Symbol contains illegal character");
+                    fatal("symbol contains illegal character '%c'\n", *txtptr);
                     break;
                 }
 
             } else {              /* symval >= 256 */
 
                 if (*operand == '(')
-                    error("Zero page address expected -- Operand not "
-                          "defined -- Label may be unknown");
+                    fatal("zero page address expected -- operand not "
+                          "defined -- label may be unknown\n");
 
                 switch (*txtptr) {
                 case ' ':
@@ -1709,37 +1682,37 @@ int main(int argc, char *argv[]) {
                     case 'Y':
                     case 'y':
                         if (*(opcode + 2) == 'Y')
-                            error("Can't have ,Y with this opcode");
+                            fatal("can't have ,Y with this opcode\n");
                         operno = AAAAY;
                         break;
                     case 'X':
                     case 'x':
                         if (*(opcode + 2) == 'X')
-                            error("Can't have ,X with this opcode");
+                            fatal("can't have ,X with this opcode\n");
                         operno = AAAAX;
                         break;
                     default:
-                        error("Must have X or Y after ','");
+                        fatal("must have X or Y after ','\n");
                         break;
                     }
                     break;
                 default:
-                    error("Illegal operand");
+                    fatal("illegal operand\n");
                     break;
                 }
             }
 
             if (operno == ERROR)
-                error("Illegal addressing");
+                fatal("illegal addressing mode\n");
             if (pass == 2)
                 if (*xlbfptr != (char)data[cnt][operno]) {
-                    fprintf(stderr, "\n\nOpcode mismatch %X <> %X",
-                                0xff & (*xlbfptr), 0xff & data[cnt][operno]);
-                    error("This zero-page label must be defined "
-                           "before present line.");
+                    fatal("opcode mismatch %X <> %X. "
+                          "this zero-page label must be defined "
+                          "before the current line.\n",
+                          0xff & (*xlbfptr), 0xff & data[cnt][operno]);
                 }
             if (data[cnt][operno] == 0)
-                error("This addressing is not possible with this opcode");
+                fatal("this addressing is not possible with this opcode\n");
             toxlbuf((char)data[cnt][operno]);   // opcode command
             toxlbuf((char)symval);      // address low byte
 
@@ -1752,14 +1725,14 @@ int main(int argc, char *argv[]) {
                 break;
             }
         }                       // end toxlbuf
-        fprintf(stderr, "to %4X\n", pc - 1);
+        info("segment end: $%4X\n", pc - 1);
 
         if (pass == 1) {
-            fprintf(stderr, "Checking symbols ...\n");
+            info("checking symbols...\n");
 
             for (i = 0; i < macnum; i++) {
                 if (symnum >= MAXSYMS - 1)
-                    err(1, "Too many labels");
+                    fatal("too many labels\n");
                 if (macptrtab[i])
                     sss[symnum].macf = MACRO;
                 else
@@ -1798,14 +1771,13 @@ int main(int argc, char *argv[]) {
     if (lstflg)
         fclose(stream2);
 
-    fputc('\n', stderr);
     symnum = 0;
     for (i = 0; i < symnumext; i++) {
         if (sss[i].macf == MACRO)
             continue;
         if (((sss[i].macf == UNUSED) || (sss[i].macf == MACRO_UNUSED))
             && sss[i].symbol[0])
-            fprintf(stderr, "Unused symbol: %s\n", sss[i].symbol);
+            info("unused symbol: %s\n", sss[i].symbol);
         if ((sss[i].symadr == sss[symnum - 1].symadr) && (symnum > 0)) {
             /* double entry */
             if (sss[symnum - 1].symbol[0] && sss[i].symbol[0]) {
@@ -1816,7 +1788,7 @@ int main(int argc, char *argv[]) {
                         strcpy(sss[symnum - 1].symbol, sss[i].symbol);
                     continue;
                 } else
-                    fprintf(stderr, "%s and %s both = $%X\n", sss[i].symbol,
+                    info("%s and %s both = $%X\n", sss[i].symbol,
                            sss[symnum - 1].symbol, sss[i].symadr);
             }
             if (!(sss[symnum - 1].symbol[0]))
@@ -1831,18 +1803,14 @@ int main(int argc, char *argv[]) {
 
     fclose(stream);
 
-    // Write .xex file
-    if ((stream = fopen(xexfilename, "wb")) == NULL) {
-        fprintf(stderr, "Can't open %s\n", xexfilename);
-        exit(1);
-    }
+    if (!((stream = fopen(xexfilename, "wb"))))
+        fatal("can't open %s\n", xexfilename);
 
-    fprintf(stderr, "\nSaving binary file %s\n", xexfilename);
+    info("saving binary file %s\n", xexfilename);
     txtsiz = fwrite(xlbuf, 1, xlbfptr - xlbuf, stream);
-    if (txtsiz != xlbfptr - xlbuf) {
-        fprintf(stderr, "Can't save %s\n", xexfilename);
-        exit(1);
-    }
-    fprintf(stderr, "%d bytes\n", txtsiz);
+    if (txtsiz != xlbfptr - xlbuf)
+        fatal("can't save %s\n", xexfilename);
+
+    info("file size: %d bytes\n", txtsiz);
     fclose(stream);
 }
