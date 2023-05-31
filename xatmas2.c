@@ -715,6 +715,22 @@ static int chkopc(const char opcstring[]) {
 
 // ----------------------------------------------------------------------------
 
+static void sort_symbols(void) {
+    int i;
+    qsort(sss, symnum, sizeof(ssstype), (int (*)(const void *, const void *)) strcmp);
+
+    for (i = symnum - 1; i > 1; i--) {
+        if (strcmp(sss[i].symbol, sss[i - 1].symbol) == 0) {
+            fprintf(stderr, "\nSame label twice -\n");
+            list_label(i - 1);
+            list_label(i);
+            exit(1);
+        }
+    }
+}
+
+// ----------------------------------------------------------------------------
+
 #define NEXT do { argc--;argv++; } while(0)
 
 int main(int argc, char *argv[]) {
@@ -1154,6 +1170,14 @@ int main(int argc, char *argv[]) {
                             sss[symnum++].symadr = i;
                             sss[symnum - 1].symtyp = '#';
                         }
+                    }
+                    else if( i != NOTFOUND && symtoi3(label) == NOTFOUND )
+                    {
+                        // Add symbol in second pass
+                        strcpy(sss[symnum].symbol, label);
+                        sss[symnum++].symadr = i;
+                        sss[symnum - 1].symtyp = '#';
+                        sort_symbols();
                     }
                     continue;
                 }
@@ -1767,17 +1791,7 @@ int main(int argc, char *argv[]) {
                 strcpy(sss[symnum++].symbol, macsymbol[i]);
 
             }
-            qsort(sss, symnum, sizeof(ssstype), (int (*)(const void *, const void *)) strcmp);
-
-
-            for (i = symnum - 1; i > 1; i--) {
-                if (strcmp(sss[i].symbol, sss[i - 1].symbol) == 0) {
-                    fprintf(stderr, "\nSame label twice -\n");
-                    list_label(i - 1);
-                    list_label(i);
-                    exit(1);
-                }
-            }
+            sort_symbols();
         }
 
         *sgndtbptr1 = pc - 1;
