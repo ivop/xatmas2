@@ -1504,6 +1504,8 @@ int main(int argc, char *argv[]) {
                 maclevel++;
                 macargsptr[maclevel] = txtptr;
                 linbegptr = macptrtab[i];
+                if ( *(txtptr - 1) == '(' )
+                    macargsptr[maclevel]--;
                 linlen = 0;
                 continue;
             }
