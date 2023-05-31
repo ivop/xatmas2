@@ -1245,13 +1245,13 @@ int main(int argc, char *argv[]) {
                     find_operand();
                     operptr = operand;
                     if (*operand) {
+                        if (*operand == '(')
+                            operptr++;
                         operptr--;
                         txtptr--;
                         do {
                             operptr++;
                             txtptr++;
-                            if (*operand == '(')
-                                operptr++;
 
                             pos = 0;
                             while (isalnum(*operptr)) {
