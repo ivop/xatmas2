@@ -517,8 +517,23 @@ static unsigned int expresstoi() {
               operand, infix, postfix);
     }
 
+    if( *txtptr == ':' )
+    {
+        if ( *(txtptr + 1) == 'L' )
+        {
+            txtptr += 2;
+            result = result & 0xFF;
+        }
+        else if ( *(txtptr + 1) == 'H' )
+        {
+            txtptr += 2;
+            result = result >> 8;
+        }
+    }
+
     if (notfound)
         result = NOTFOUND;
+
     return (result);
 }
 
