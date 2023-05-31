@@ -23,6 +23,6 @@ not tested yet.
 Originally called Codegen.  
 Copyright © 2004-2011, Richard Jackman  
 Major overhaul, cleanup, and rename.  
-Copyright  2018, Ivo van Poorten  
+Copyright © 2018, Ivo van Poorten  
 Parser and macro fixes.  
 Copyright © 2023, Daniel Serpell  
