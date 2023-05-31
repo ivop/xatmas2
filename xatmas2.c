@@ -630,9 +630,9 @@ static void find_operand(void) {
 
     switch (*txtptr++) {
     case '\n':
-    case '\t':
         break;
     case ' ':
+    case '\t':
         linptr = txtptr;
         if (!strchr(" \t\n", *txtptr)) {        /* there is an operand */
             if (*txtptr == '(')
@@ -1073,14 +1073,14 @@ int main(int argc, char *argv[]) {
 
             *ptr = 0;           //opcode finalised
 
-            if (!(*txtptr == ' ') || *(txtptr + 1) == ' '
+            if (!(*txtptr == ' ' || *txtptr == '\t') || *(txtptr + 1) == ' '
                                   || *(txtptr + 1) == '\n'
                                   || *(txtptr + 1) == '\t') {
                 //Check operand for dirictives
                 sprintf(opcstr, " %s ", opcode);
                 if (strstr(assdirecs, opcstr))
                     fatal("directive must be followed by a single space "
-                          "(not tab) and an operand\n");
+                          "or tab and an operand\n");
             }
 
             *prnlnbuf = 0;
