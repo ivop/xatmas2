@@ -184,7 +184,7 @@ static void info_and_fatal(const int s, char *f, ...) {
     if (s) {
         if (linnum) fprintf(stderr, "xatmas2: error at line %d\n", linnum);
         if (pc) fprintf(stderr, "xatmas2: address: $%04X\n", pc);
-        if (maclevel) fprintf(stderr, "xatmas2: error in macro");
+        if (maclevel) fprintf(stderr, "xatmas2: error in macro\n");
     } else if (quiet) {
         return;
     }
@@ -345,7 +345,7 @@ static unsigned int symtoi1() {
             symfg = 1;
             return (sssptr->symadr);
         } else {
-            fatal("label undefined");
+            fatal("label undefined\n");
         }
     }
     return (NOTFOUND);
@@ -811,7 +811,7 @@ int main(int argc, char *argv[]) {
     txtsiz = fread(txtbuf, 1, MAX_TXT_SIZ, stream);
     fclose(stream);
 
-    if (txtsiz == MAX_TXT_SIZ) fatal("file is too long");
+    if (txtsiz == MAX_TXT_SIZ) fatal("file is too long\n");
 
     info("source size: %i bytes\n", txtsiz);
 
@@ -1102,7 +1102,7 @@ int main(int argc, char *argv[]) {
             }
 
             if (!isspace(*txtptr))
-                fatal("illegal character '%c' in symbol. space expected",
+                fatal("illegal character '%c' in symbol. space expected\n",
                                                                     *txtptr);
 
             *ptr = 0;           //opcode finalised
@@ -1306,7 +1306,7 @@ int main(int argc, char *argv[]) {
                 info("including %s\n", include_filename);
 
                 if ((stream3 = fopen(include_filename, "r")) == NULL)
-                    fatal("can't open INCLUDE file");
+                    fatal("can't open INCLUDE file\n");
                 includebuf = txtendptr;
                 include_txtsiz =
                     fread(includebuf, 1, MAX_TXT_SIZ - txtsiz, stream3);
