@@ -748,7 +748,7 @@ int main(int argc, char *argv[]) {
     int i, intval;
     char label[40];
     char labelstr[40];
-    char opcstr[40];
+    char opcstr[50];
     char *tpsav;
     int temp;
 
