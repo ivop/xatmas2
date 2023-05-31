@@ -2,7 +2,7 @@
 
 Atmas 2 Compatible 6502 Cross-Assembler  
 
-Xatmas2 is a cross-assembler for modern systems to cross compile
+Xatmas2 is a cross-assembler for modern systems to cross-assemble
 original source code for the Atmas II assembler for the Atari 8-bit series,
 once a popular assembler in the eighties and nineties.  
 
