@@ -829,6 +829,9 @@ int main(int argc, char *argv[]) {
             else
                 *ptr = '\n';
         }
+    // ATMAS adds $FF bytes at the end of files:
+    while (txtendptr > txtbuf && *(txtendptr - 1) == '\377')
+        txtendptr--;
     *txtendptr++ = '\n';
     *txtendptr++ = '\n';
     *txtendptr++ = '\0';
