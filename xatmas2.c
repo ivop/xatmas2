@@ -184,7 +184,7 @@ static void info_and_fatal(const int s, char *f, ...) {
     if (s) {
         if (linnum) fprintf(stderr, "xatmas2: error at line %d\n", linnum);
         if (pc) fprintf(stderr, "xatmas2: address: $%04X\n", pc);
-        if (maclevel) fprintf(stderr, "xatmas2: error in macro");
+        if (maclevel) fprintf(stderr, "xatmas2: error in macro\n");
     } else if (quiet) {
         return;
     }
@@ -345,7 +345,7 @@ static unsigned int symtoi1() {
             symfg = 1;
             return (sssptr->symadr);
         } else {
-            fatal("label undefined");
+            fatal("label undefined\n");
         }
     }
     return (NOTFOUND);
@@ -517,8 +517,23 @@ static unsigned int expresstoi() {
               operand, infix, postfix);
     }
 
+    if( *txtptr == ':' )
+    {
+        if ( *(txtptr + 1) == 'L' )
+        {
+            txtptr += 2;
+            result = result & 0xFF;
+        }
+        else if ( *(txtptr + 1) == 'H' )
+        {
+            txtptr += 2;
+            result = result >> 8;
+        }
+    }
+
     if (notfound)
         result = NOTFOUND;
+
     return (result);
 }
 
@@ -630,9 +645,9 @@ static void find_operand(void) {
 
     switch (*txtptr++) {
     case '\n':
-    case '\t':
         break;
     case ' ':
+    case '\t':
         linptr = txtptr;
         if (!strchr(" \t\n", *txtptr)) {        /* there is an operand */
             if (*txtptr == '(')
@@ -696,6 +711,22 @@ static int chkopc(const char opcstring[]) {
         cnt++;
     }
     return (-1);
+}
+
+// ----------------------------------------------------------------------------
+
+static void sort_symbols(void) {
+    int i;
+    qsort(sss, symnum, sizeof(ssstype), (int (*)(const void *, const void *)) strcmp);
+
+    for (i = symnum - 1; i > 1; i--) {
+        if (strcmp(sss[i].symbol, sss[i - 1].symbol) == 0) {
+            fprintf(stderr, "\nSame label twice -\n");
+            list_label(i - 1);
+            list_label(i);
+            exit(1);
+        }
+    }
 }
 
 // ----------------------------------------------------------------------------
@@ -780,7 +811,7 @@ int main(int argc, char *argv[]) {
     txtsiz = fread(txtbuf, 1, MAX_TXT_SIZ, stream);
     fclose(stream);
 
-    if (txtsiz == MAX_TXT_SIZ) fatal("file is too long");
+    if (txtsiz == MAX_TXT_SIZ) fatal("file is too long\n");
 
     info("source size: %i bytes\n", txtsiz);
 
@@ -814,6 +845,9 @@ int main(int argc, char *argv[]) {
             else
                 *ptr = '\n';
         }
+    // ATMAS adds $FF bytes at the end of files:
+    while (txtendptr > txtbuf && *(txtendptr - 1) == '\377')
+        txtendptr--;
     *txtendptr++ = '\n';
     *txtendptr++ = '\n';
     *txtendptr++ = '\0';
@@ -1068,19 +1102,19 @@ int main(int argc, char *argv[]) {
             }
 
             if (!isspace(*txtptr))
-                fatal("illegal character '%c' in symbol. space expected",
+                fatal("illegal character '%c' in symbol. space expected\n",
                                                                     *txtptr);
 
             *ptr = 0;           //opcode finalised
 
-            if (!(*txtptr == ' ') || *(txtptr + 1) == ' '
+            if (!(*txtptr == ' ' || *txtptr == '\t') || *(txtptr + 1) == ' '
                                   || *(txtptr + 1) == '\n'
                                   || *(txtptr + 1) == '\t') {
                 //Check operand for dirictives
                 sprintf(opcstr, " %s ", opcode);
                 if (strstr(assdirecs, opcstr))
                     fatal("directive must be followed by a single space "
-                          "(not tab) and an operand\n");
+                          "or tab and an operand\n");
             }
 
             *prnlnbuf = 0;
@@ -1136,6 +1170,14 @@ int main(int argc, char *argv[]) {
                             sss[symnum++].symadr = i;
                             sss[symnum - 1].symtyp = '#';
                         }
+                    }
+                    else if( i != NOTFOUND && symtoi3(label) == NOTFOUND )
+                    {
+                        // Add symbol in second pass
+                        strcpy(sss[symnum].symbol, label);
+                        sss[symnum++].symadr = i;
+                        sss[symnum - 1].symtyp = '#';
+                        sort_symbols();
                     }
                     continue;
                 }
@@ -1227,13 +1269,13 @@ int main(int argc, char *argv[]) {
                     find_operand();
                     operptr = operand;
                     if (*operand) {
+                        if (*operand == '(')
+                            operptr++;
                         operptr--;
                         txtptr--;
                         do {
                             operptr++;
                             txtptr++;
-                            if (*operand == '(')
-                                operptr++;
 
                             pos = 0;
                             while (isalnum(*operptr)) {
@@ -1264,7 +1306,7 @@ int main(int argc, char *argv[]) {
                 info("including %s\n", include_filename);
 
                 if ((stream3 = fopen(include_filename, "r")) == NULL)
-                    fatal("can't open INCLUDE file");
+                    fatal("can't open INCLUDE file\n");
                 includebuf = txtendptr;
                 include_txtsiz =
                     fread(includebuf, 1, MAX_TXT_SIZ - txtsiz, stream3);
@@ -1462,6 +1504,8 @@ int main(int argc, char *argv[]) {
                 maclevel++;
                 macargsptr[maclevel] = txtptr;
                 linbegptr = macptrtab[i];
+                if ( *(txtptr - 1) == '(' )
+                    macargsptr[maclevel]--;
                 linlen = 0;
                 continue;
             }
@@ -1749,17 +1793,7 @@ int main(int argc, char *argv[]) {
                 strcpy(sss[symnum++].symbol, macsymbol[i]);
 
             }
-            qsort(sss, symnum, sizeof(ssstype), (int (*)(const void *, const void *)) strcmp);
-
-
-            for (i = symnum - 1; i > 1; i--) {
-                if (strcmp(sss[i].symbol, sss[i - 1].symbol) == 0) {
-                    fprintf(stderr, "\nSame label twice -\n");
-                    list_label(i - 1);
-                    list_label(i);
-                    exit(1);
-                }
-            }
+            sort_symbols();
         }
 
         *sgndtbptr1 = pc - 1;
