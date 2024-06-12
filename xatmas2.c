@@ -1806,7 +1806,7 @@ int main(int argc, char *argv[]) {
     if (strchr(outflgs, 'N') || strchr(outflgs, 'n')) {
         fprintf(stream2, "\n\n**** Symbol table *****\n\n");
         for (i = 0; i < symnumext; i++) {
-            if (sss[i].symbol)
+            if (sss[i].symbol[0])
                 list_label_f(i);
         }
     }
