@@ -927,7 +927,7 @@ int main(int argc, char *argv[]) {
 
             if (!maclevel && pass == 1) { /*Test line for illegal characters */
                 for (cnt = 1; cnt <= linlen; cnt++) {
-                    if (*linptr < 0) {
+                    if (((signed char)*linptr) < 0) {
                         fatal("illegal character at line %i:\n", linnum);
                     }
                     linptr++;
