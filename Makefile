@@ -2,7 +2,7 @@
 CC ?= gcc
 DEBUG = -g3
 WARN = -W -Wall -Wextra
-CFLAGS ?= -std=c99 -O3
+CFLAGS ?= -std=c99 -O3 -fsigned-char
 DEFINES = -D_XOPEN_SOURCE=500
 
 all:	xatmas2
